@@ -12,6 +12,10 @@ import type {
   ShoppingItemResponse,
   ShoppingItemCreateParams,
   QuantityStatus,
+  SuggestParams,
+  SuggestResponse,
+  AddShoppingParams,
+  AddShoppingResponse,
 } from './constants'
 
 const BASE_URL = import.meta.env.VITE_API_BASE_URL ?? 'http://localhost:8000'
@@ -129,6 +133,33 @@ export const shoppingApi = {
     await api.DELETE('/shopping/{item_id}', {
       params: { path: { item_id: id } },
     })
+  },
+}
+
+export const suggestApi = {
+  suggest: async (body: SuggestParams): Promise<SuggestResponse> => {
+    const res = await fetch(`${BASE_URL}/recipe/suggest`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(body),
+    })
+    if (!res.ok) {
+      const err = await res.json().catch(() => ({}))
+      throw new Error(typeof err.detail === 'string' ? err.detail : 'サーバーエラーが発生しました')
+    }
+    return res.json() as Promise<SuggestResponse>
+  },
+  addShopping: async (body: AddShoppingParams): Promise<AddShoppingResponse> => {
+    const res = await fetch(`${BASE_URL}/recipe/suggest/add-shopping`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(body),
+    })
+    if (!res.ok) {
+      const err = await res.json().catch(() => ({}))
+      throw new Error(typeof err.detail === 'string' ? err.detail : 'サーバーエラーが発生しました')
+    }
+    return res.json() as Promise<AddShoppingResponse>
   },
 }
 

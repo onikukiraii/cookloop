@@ -10,6 +10,7 @@ from routers.fridge import router as fridge_router
 from routers.ingredient_master import router as ingredient_master_router
 from routers.recipe import router as recipe_router
 from routers.shopping import router as shopping_router
+from routers.suggest import router as suggest_router
 from routers.user import router as user_router
 
 logger = logging.getLogger(__name__)
@@ -47,4 +48,5 @@ app.include_router(ingredient_master_router)
 app.include_router(fridge_router)
 app.include_router(condiment_router)
 app.include_router(recipe_router)
+app.include_router(suggest_router)
 app.include_router(shopping_router)

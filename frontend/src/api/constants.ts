@@ -28,3 +28,36 @@ export const SHOPPING_SOURCE_LABEL: Record<ShoppingSource, string> = {
   recipe: 'レシピから',
   staple_auto: '定番自動',
 }
+
+export type SuggestedStep = {
+  step_order: number
+  text: string
+}
+
+export type SuggestedRecipe = {
+  type: 'hotcook' | 'manual'
+  name: string
+  menu_num: string | null
+  image_url: string | null
+  used_ingredients: string[]
+  missing_ingredients: string[]
+  note: string
+  steps: SuggestedStep[]
+}
+
+export type SuggestResponse = {
+  suggestions: SuggestedRecipe[]
+}
+
+export type SuggestParams = {
+  mode: 'omakase' | 'ingredient'
+  ingredient_master_ids?: number[]
+}
+
+export type AddShoppingParams = {
+  ingredient_names: string[]
+}
+
+export type AddShoppingResponse = {
+  added_count: number
+}

@@ -15,6 +15,9 @@ from db.session import get_db  # noqa: E402
 from entity.base import Base  # noqa: E402
 from entity.condiment_item import CondimentItem  # noqa: E402
 from entity.fridge_item import FridgeItem  # noqa: E402
+from entity.hotcook_recipe import HotcookRecipe  # noqa: E402
+from entity.hotcook_recipe_ingredient import HotcookRecipeIngredient  # noqa: E402
+from entity.hotcook_recipe_step import HotcookRecipeStep  # noqa: E402
 from entity.ingredient_master import IngredientMaster  # noqa: E402
 from entity.shopping_item import ShoppingItem  # noqa: E402
 from entity.user import User  # noqa: E402
@@ -139,5 +142,53 @@ def create_shopping_item(db_session: Session) -> Callable[..., ShoppingItem]:
         db_session.commit()
         db_session.refresh(item)
         return item
+
+    return _factory
+
+
+@pytest.fixture()
+def create_hotcook_recipe(db_session: Session) -> Callable[..., HotcookRecipe]:
+    def _factory(
+        code: str = "R0001",
+        name: str = "テストレシピ",
+        menu_num: str | None = "0001",
+        image_url: str | None = None,
+    ) -> HotcookRecipe:
+        recipe = HotcookRecipe(code=code, name=name, menu_num=menu_num, image_url=image_url)
+        db_session.add(recipe)
+        db_session.commit()
+        db_session.refresh(recipe)
+        return recipe
+
+    return _factory
+
+
+@pytest.fixture()
+def create_hotcook_recipe_ingredient(db_session: Session) -> Callable[..., HotcookRecipeIngredient]:
+    def _factory(
+        recipe: HotcookRecipe,
+        ingredient_master: IngredientMaster,
+    ) -> HotcookRecipeIngredient:
+        ri = HotcookRecipeIngredient(recipe_id=recipe.id, ingredient_master_id=ingredient_master.id)
+        db_session.add(ri)
+        db_session.commit()
+        db_session.refresh(ri)
+        return ri
+
+    return _factory
+
+
+@pytest.fixture()
+def create_hotcook_recipe_step(db_session: Session) -> Callable[..., HotcookRecipeStep]:
+    def _factory(
+        recipe: HotcookRecipe,
+        step_order: int = 1,
+        text: str = "手順テキスト",
+    ) -> HotcookRecipeStep:
+        step = HotcookRecipeStep(recipe_id=recipe.id, step_order=step_order, text=text)
+        db_session.add(step)
+        db_session.commit()
+        db_session.refresh(step)
+        return step
 
     return _factory
