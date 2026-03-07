@@ -61,16 +61,8 @@ class IngredientSearchClient:
                                 "fields": ["name", "aliases", "yomi"],
                             }
                         },
-                        {
-                            "wildcard": {
-                                "name": {"value": f"*{query}*"}
-                            }
-                        },
-                        {
-                            "wildcard": {
-                                "yomi": {"value": f"*{query}*"}
-                            }
-                        },
+                        {"wildcard": {"name": {"value": f"*{query}*"}}},
+                        {"wildcard": {"yomi": {"value": f"*{query}*"}}},
                     ],
                     "minimum_should_match": 1,
                 }
