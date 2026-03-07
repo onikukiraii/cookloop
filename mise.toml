@@ -83,3 +83,8 @@ dir = "frontend"
 [tasks."test:all"]
 description = "Run all tests (backend + frontend)"
 depends = ["test", "test:front"]
+
+[tasks.sync-search]
+description = "Sync ingredient_master to OpenSearch"
+run = "uv run python ../scripts/sync_opensearch.py"
+dir = "backend"

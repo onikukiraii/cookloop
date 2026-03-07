@@ -1,6 +1,11 @@
 import { BrowserRouter, Routes, Route } from 'react-router-dom'
 import { AppLayout } from '@/layouts/AppLayout'
-import { DashboardPage } from '@/pages/DashboardPage'
+import { FridgePage } from '@/pages/FridgePage'
+import { ShoppingPage } from '@/pages/ShoppingPage'
+import { MenuSuggestPage } from '@/pages/MenuSuggestPage'
+import { RecipePage } from '@/pages/RecipePage'
+import { CondimentPage } from '@/pages/CondimentPage'
+import { IngredientMasterPage } from '@/pages/IngredientMasterPage'
 import { Toaster } from '@/components/ui/sonner'
 
 function App() {
@@ -8,7 +13,12 @@ function App() {
     <BrowserRouter>
       <Routes>
         <Route element={<AppLayout />}>
-          <Route path="/" element={<DashboardPage />} />
+          <Route path="/" element={<FridgePage />} />
+          <Route path="/shopping" element={<ShoppingPage />} />
+          <Route path="/menu-suggest" element={<MenuSuggestPage />} />
+          <Route path="/recipes" element={<RecipePage />} />
+          <Route path="/condiments" element={<CondimentPage />} />
+          <Route path="/ingredients" element={<IngredientMasterPage />} />
         </Route>
       </Routes>
       <Toaster />

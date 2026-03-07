@@ -13,6 +13,10 @@ from sqlalchemy.pool import StaticPool  # noqa: E402
 
 from db.session import get_db  # noqa: E402
 from entity.base import Base  # noqa: E402
+from entity.condiment_item import CondimentItem  # noqa: E402
+from entity.fridge_item import FridgeItem  # noqa: E402
+from entity.ingredient_master import IngredientMaster  # noqa: E402
+from entity.shopping_item import ShoppingItem  # noqa: E402
 from entity.user import User  # noqa: E402
 from main import app  # noqa: E402
 
@@ -63,5 +67,77 @@ def create_user(db_session: Session) -> Callable[..., User]:
         db_session.commit()
         db_session.refresh(user)
         return user
+
+    return _factory
+
+
+@pytest.fixture()
+def create_ingredient_master(db_session: Session) -> Callable[..., IngredientMaster]:
+    def _factory(
+        name: str = "トマト",
+        default_expiry_days: int = 7,
+        is_staple: bool = False,
+    ) -> IngredientMaster:
+        master = IngredientMaster(name=name, default_expiry_days=default_expiry_days, is_staple=is_staple)
+        db_session.add(master)
+        db_session.commit()
+        db_session.refresh(master)
+        return master
+
+    return _factory
+
+
+@pytest.fixture()
+def create_fridge_item(db_session: Session) -> Callable[..., FridgeItem]:
+    def _factory(
+        ingredient_master: IngredientMaster,
+        expiry_date: str = "2026-03-14",
+        quantity_status: str = "full",
+    ) -> FridgeItem:
+        from datetime import date
+
+        item = FridgeItem(
+            ingredient_master_id=ingredient_master.id,
+            expiry_date=date.fromisoformat(expiry_date),
+            quantity_status=quantity_status,
+        )
+        db_session.add(item)
+        db_session.commit()
+        db_session.refresh(item)
+        return item
+
+    return _factory
+
+
+@pytest.fixture()
+def create_condiment_item(db_session: Session) -> Callable[..., CondimentItem]:
+    def _factory(
+        name: str = "醤油",
+        quantity_status: str = "full",
+        is_staple: bool = True,
+    ) -> CondimentItem:
+        item = CondimentItem(name=name, quantity_status=quantity_status, is_staple=is_staple)
+        db_session.add(item)
+        db_session.commit()
+        db_session.refresh(item)
+        return item
+
+    return _factory
+
+
+@pytest.fixture()
+def create_shopping_item(db_session: Session) -> Callable[..., ShoppingItem]:
+    def _factory(
+        ingredient_master: IngredientMaster,
+        source: str = "manual",
+    ) -> ShoppingItem:
+        item = ShoppingItem(
+            ingredient_master_id=ingredient_master.id,
+            source=source,
+        )
+        db_session.add(item)
+        db_session.commit()
+        db_session.refresh(item)
+        return item
 
     return _factory

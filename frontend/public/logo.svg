@@ -1,0 +1,20 @@
+<svg width="205" height="80" viewBox="35 0 215 80" fill="none" xmlns="http://www.w3.org/2000/svg">
+
+  <g id="Symbol">
+    <path d="M45 25V55C45 63.2843 51.7157 70 60 70H70" stroke="#62A176" stroke-width="8" stroke-linecap="round"/>
+
+    <path d="M70 10H80C88.2843 10 95 16.7157 95 25V55C95 63.2843 88.2843 70 80 70" stroke="#C49547" stroke-width="8" stroke-linecap="round"/>
+
+    <path d="M45 25C45 16.7157 51.7157 10 60 10H70" stroke="#62A176" stroke-width="8" stroke-linecap="round"/>
+
+    <circle cx="85" cy="40" r="5" fill="#E14E5F"/>
+  </g>
+
+  <text x="110" y="52" fill="#304D3B" style="font-family:'Noto Sans JP', sans-serif; font-weight: 700; font-size: 28px; letter-spacing: -0.02em;">
+    Cook<tspan fill="#C49547">Loop</tspan>
+  </text>
+
+  <text x="111" y="68" fill="#90A4AE" style="font-family:'Noto Sans JP', sans-serif; font-size: 9px; letter-spacing: 0.1em;">
+    SMART INVENTORY &amp; MENU
+  </text>
+</svg>
