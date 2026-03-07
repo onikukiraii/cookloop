@@ -6,7 +6,13 @@ from db.session import get_db
 from entity.hotcook_recipe import HotcookRecipe
 from entity.hotcook_recipe_ingredient import HotcookRecipeIngredient
 from entity.ingredient_master import IngredientMaster
-from response.recipe import RecipeDetailResponse, RecipeIngredientResponse, RecipeListResponse, RecipeStepResponse
+from response.recipe import (
+    RecipeDetailResponse,
+    RecipeIngredientResponse,
+    RecipeListResponse,
+    RecipeMaterialResponse,
+    RecipeStepResponse,
+)
 
 router = APIRouter(prefix="/recipes", tags=["recipes"])
 
@@ -66,6 +72,7 @@ def get_recipe(recipe_id: int, db: Session = Depends(get_db)) -> RecipeDetailRes
         db.query(HotcookRecipe)
         .options(
             joinedload(HotcookRecipe.ingredients).joinedload(HotcookRecipeIngredient.ingredient_master),
+            joinedload(HotcookRecipe.materials),
             joinedload(HotcookRecipe.steps),
         )
         .filter(HotcookRecipe.id == recipe_id)
@@ -88,6 +95,14 @@ def get_recipe(recipe_id: int, db: Session = Depends(get_db)) -> RecipeDetailRes
             )
             for ri in recipe.ingredients
             if ri.ingredient_master
+        ],
+        materials=[
+            RecipeMaterialResponse(
+                name=m.name,
+                quantity=m.quantity,
+                group_name=m.group_name,
+            )
+            for m in sorted(recipe.materials, key=lambda m: m.material_order)
         ],
         steps=sorted(
             [
