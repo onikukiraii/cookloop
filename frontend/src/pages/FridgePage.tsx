@@ -93,6 +93,16 @@ export function FridgePage() {
     }
   }
 
+  const handleToggleStaple = async (item: FridgeItemResponse) => {
+    try {
+      await ingredientsApi.update(item.ingredient_master_id, { is_staple: !item.is_staple })
+      toast.success(`「${item.ingredient_name}」を${item.is_staple ? '定番から解除' : '定番に設定'}しました`)
+      await load(searchQuery || undefined)
+    } catch (e) {
+      toast.error(e instanceof Error ? e.message : '更新に失敗しました')
+    }
+  }
+
   const handleDelete = async () => {
     if (!deleteTarget) return
     setDeleting(true)
@@ -161,9 +171,13 @@ export function FridgePage() {
                 <div className="min-w-0 flex-1 space-y-1">
                   <div className="flex items-center gap-2">
                     <span className="truncate font-medium">{item.ingredient_name}</span>
-                    {item.is_staple && (
-                      <span title="定番食材"><Star className="h-4 w-4 shrink-0 fill-staple-flag text-staple-flag" /></span>
-                    )}
+                    <button
+                      onClick={() => handleToggleStaple(item)}
+                      title={item.is_staple ? '定番から解除' : '定番に設定'}
+                      className="cursor-pointer"
+                    >
+                      <Star className={cn('h-4 w-4 shrink-0', item.is_staple ? 'fill-staple-flag text-staple-flag' : 'text-muted-foreground/40 hover:text-staple-flag')} />
+                    </button>
                   </div>
                   <div className="flex items-center gap-2">
                     <FreshnessBadge expiryDate={item.expiry_date} />
