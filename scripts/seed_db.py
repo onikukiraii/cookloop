@@ -35,13 +35,13 @@ def load_json(filename: str) -> list[dict]:
 def seed(session: Session) -> None:
     # 既存データを削除（外部キー制約の順序に注意）
     print("Clearing existing data...")
-    session.execute(text("SET FOREIGN_KEY_CHECKS = 0"))
     session.execute(text("DELETE FROM hotcook_recipe_ingredients"))
     session.execute(text("DELETE FROM hotcook_recipe_materials"))
     session.execute(text("DELETE FROM hotcook_recipe_steps"))
     session.execute(text("DELETE FROM hotcook_recipes"))
+    session.execute(text("DELETE FROM fridge_items"))
+    session.execute(text("DELETE FROM shopping_list"))
     session.execute(text("DELETE FROM ingredient_master"))
-    session.execute(text("SET FOREIGN_KEY_CHECKS = 1"))
     session.commit()
 
     # 1. 食材マスタ投入
@@ -52,7 +52,7 @@ def seed(session: Session) -> None:
     for item in ingredients_data:
         master = IngredientMaster(
             name=item["name"],
-            default_expiry_days=DEFAULT_EXPIRY_DAYS,
+            default_expiry_days=item.get("default_expiry_days", DEFAULT_EXPIRY_DAYS),
             is_staple=False,
         )
         session.add(master)
@@ -99,6 +99,7 @@ def seed(session: Session) -> None:
             name=recipe_data["name"],
             menu_num=recipe_data.get("menu_num") or None,
             image_url=recipe_data.get("image_url") or None,
+            category=recipe_data.get("category") or None,
         )
         session.add(recipe)
         session.flush()  # recipe.id を確定
