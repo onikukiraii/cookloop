@@ -4,7 +4,7 @@
  */
 
 export interface paths {
-    "/api/users/": {
+    "/users/": {
         parameters: {
             query?: never;
             header?: never;
@@ -22,7 +22,7 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/api/ingredients/search": {
+    "/ingredients/search": {
         parameters: {
             query?: never;
             header?: never;
@@ -39,7 +39,7 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/api/ingredients/": {
+    "/ingredients/": {
         parameters: {
             query?: never;
             header?: never;
@@ -57,7 +57,7 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/api/ingredients/{item_id}": {
+    "/ingredients/{item_id}": {
         parameters: {
             query?: never;
             header?: never;
@@ -74,7 +74,7 @@ export interface paths {
         patch: operations["update_ingredient_api_ingredients__item_id__patch"];
         trace?: never;
     };
-    "/api/fridge/": {
+    "/fridge/": {
         parameters: {
             query?: never;
             header?: never;
@@ -92,7 +92,7 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/api/fridge/{item_id}": {
+    "/fridge/{item_id}": {
         parameters: {
             query?: never;
             header?: never;
@@ -110,7 +110,7 @@ export interface paths {
         patch: operations["update_fridge_item_api_fridge__item_id__patch"];
         trace?: never;
     };
-    "/api/condiments/": {
+    "/condiments/": {
         parameters: {
             query?: never;
             header?: never;
@@ -128,7 +128,7 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/api/condiments/{item_id}": {
+    "/condiments/{item_id}": {
         parameters: {
             query?: never;
             header?: never;
@@ -146,7 +146,7 @@ export interface paths {
         patch: operations["update_condiment_api_condiments__item_id__patch"];
         trace?: never;
     };
-    "/api/favorites/": {
+    "/favorites/": {
         parameters: {
             query?: never;
             header?: never;
@@ -163,7 +163,7 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/api/favorites/{recipe_id}": {
+    "/favorites/{recipe_id}": {
         parameters: {
             query?: never;
             header?: never;
@@ -181,7 +181,7 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/api/recipes/": {
+    "/recipes/": {
         parameters: {
             query?: never;
             header?: never;
@@ -198,7 +198,7 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/api/recipes/{recipe_id}": {
+    "/recipes/{recipe_id}": {
         parameters: {
             query?: never;
             header?: never;
@@ -215,7 +215,7 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/api/recipe/suggest": {
+    "/recipe/suggest": {
         parameters: {
             query?: never;
             header?: never;
@@ -232,7 +232,7 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/api/recipe/suggest/add-shopping": {
+    "/recipe/suggest/add-shopping": {
         parameters: {
             query?: never;
             header?: never;
@@ -249,7 +249,7 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/api/shopping/": {
+    "/shopping/": {
         parameters: {
             query?: never;
             header?: never;
@@ -267,7 +267,7 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/api/shopping/{item_id}/check": {
+    "/shopping/{item_id}/check": {
         parameters: {
             query?: never;
             header?: never;
@@ -284,7 +284,7 @@ export interface paths {
         patch: operations["check_shopping_item_api_shopping__item_id__check_patch"];
         trace?: never;
     };
-    "/api/shopping/{item_id}": {
+    "/shopping/{item_id}": {
         parameters: {
             query?: never;
             header?: never;
