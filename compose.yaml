@@ -20,6 +20,8 @@ services:
     volumes:
       - ./backend:/app
       - /app/.venv
+    env_file:
+      - .env
     environment:
       DATABASE_URL: mysql+pymysql://app:password@db:3306/cookloop
       OPENSEARCH_URL: http://opensearch:9200
