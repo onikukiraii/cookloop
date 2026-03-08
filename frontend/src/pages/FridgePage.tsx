@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useState } from 'react'
-import { CircleCheck, Plus, Refrigerator, Star } from 'lucide-react'
+import { CircleCheck, Plus, Refrigerator, Search, Star } from 'lucide-react'
 import { toast } from 'sonner'
 import { Button } from '@/components/ui/button'
 import { Label } from '@/components/ui/label'
@@ -34,13 +34,14 @@ export function FridgePage() {
   const [expiryDate, setExpiryDate] = useState('')
   const [quantityStatus, setQuantityStatus] = useState<QuantityStatus>('full')
   const [submitting, setSubmitting] = useState(false)
+  const [searchQuery, setSearchQuery] = useState('')
   const [deleteTarget, setDeleteTarget] = useState<FridgeItemResponse | null>(null)
   const [deleting, setDeleting] = useState(false)
 
-  const load = useCallback(async () => {
+  const load = useCallback(async (q?: string) => {
     try {
       const [fridgeData, ingredientData] = await Promise.all([
-        fridgeApi.list(),
+        fridgeApi.list(q || undefined),
         ingredientsApi.list(),
       ])
       setItems(fridgeData)
@@ -52,7 +53,14 @@ export function FridgePage() {
     }
   }, [])
 
-  useEffect(() => { load() }, [load])
+  useEffect(() => {
+    const delay = searchQuery ? 300 : 0
+    const timer = setTimeout(() => {
+      setLoading(true)
+      load(searchQuery || undefined)
+    }, delay)
+    return () => clearTimeout(timer)
+  }, [searchQuery, load])
 
   const handleCreate = async () => {
     if (!ingredientId) return
@@ -66,7 +74,7 @@ export function FridgePage() {
       toast.success('食材を追加しました')
       setDialogOpen(false)
       resetForm()
-      await load()
+      await load(searchQuery || undefined)
     } catch (e) {
       toast.error(e instanceof Error ? e.message : '追加に失敗しました')
     } finally {
@@ -79,7 +87,7 @@ export function FridgePage() {
     const nextStatus = QUANTITY_CYCLE[(currentIndex + 1) % QUANTITY_CYCLE.length]
     try {
       await fridgeApi.update(item.id, nextStatus)
-      await load()
+      await load(searchQuery || undefined)
     } catch (e) {
       toast.error(e instanceof Error ? e.message : '更新に失敗しました')
     }
@@ -92,7 +100,7 @@ export function FridgePage() {
       await fridgeApi.remove(deleteTarget.id)
       toast.success(`「${deleteTarget.ingredient_name}」を削除しました`)
       setDeleteTarget(null)
-      await load()
+      await load(searchQuery || undefined)
     } catch (e) {
       toast.error(e instanceof Error ? e.message : '削除に失敗しました')
     } finally {
@@ -122,6 +130,16 @@ export function FridgePage() {
           <Plus className="mr-1 h-4 w-4" />
           追加
         </Button>
+      </div>
+
+      <div className="relative">
+        <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+        <Input
+          placeholder="食材名で検索..."
+          value={searchQuery}
+          onChange={(e) => setSearchQuery(e.target.value)}
+          className="pl-9"
+        />
       </div>
 
       {loading ? (

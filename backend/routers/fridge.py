@@ -1,26 +1,40 @@
+import logging
 from datetime import UTC, date, datetime, timedelta
 
-from fastapi import APIRouter, Depends, HTTPException
+from fastapi import APIRouter, Depends, HTTPException, Query
 from sqlalchemy.orm import Session, joinedload
 
 from db.session import get_db
 from entity.fridge_item import FridgeItem
 from entity.ingredient_master import IngredientMaster
 from entity.shopping_item import ShoppingItem
+from lib.opensearch import create_ingredient_search_client
 from params.fridge import FridgeItemCreateParams, FridgeItemUpdateParams
 from response.fridge import FridgeItemResponse, to_fridge_response
 
 router = APIRouter(prefix="/fridge", tags=["fridge"])
+logger = logging.getLogger(__name__)
 
 
 @router.get("/", response_model=list[FridgeItemResponse])
-def get_fridge_items(db: Session = Depends(get_db)) -> list[FridgeItemResponse]:
-    items = (
-        db.query(FridgeItem)
-        .options(joinedload(FridgeItem.ingredient_master))
-        .order_by(FridgeItem.expiry_date.asc())
-        .all()
-    )
+def get_fridge_items(
+    q: str = Query("", description="食材名で検索"),
+    db: Session = Depends(get_db),
+) -> list[FridgeItemResponse]:
+    query = db.query(FridgeItem).options(joinedload(FridgeItem.ingredient_master))
+
+    if q.strip():
+        try:
+            client = create_ingredient_search_client()
+            hits = client.search(q.strip())
+            master_ids = [h["id"] for h in hits]
+            if not master_ids:
+                return []
+            query = query.filter(FridgeItem.ingredient_master_id.in_(master_ids))
+        except Exception:
+            logger.warning("OpenSearch unavailable, returning all fridge items", exc_info=True)
+
+    items = query.order_by(FridgeItem.expiry_date.asc()).all()
     return [to_fridge_response(item) for item in items]
 
 

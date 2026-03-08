@@ -69,7 +69,12 @@ export const ingredientsApi = {
 }
 
 export const fridgeApi = {
-  list: async () => {
+  list: async (q?: string) => {
+    if (q) {
+      const res = await fetch(`${BASE_URL}/fridge/?q=${encodeURIComponent(q)}`)
+      if (!res.ok) throw new Error('検索に失敗しました')
+      return res.json() as Promise<FridgeItemResponse[]>
+    }
     const res = await api.GET('/fridge/')
     return unwrap<FridgeItemResponse[]>(res)
   },
