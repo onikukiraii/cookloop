@@ -31,7 +31,7 @@ function BottomNav() {
   const location = useLocation()
 
   return (
-    <nav className="fixed bottom-0 left-0 right-0 z-50 border-t bg-background md:hidden">
+    <nav className="fixed bottom-0 left-0 right-0 z-50 border-t bg-background pb-[env(safe-area-inset-bottom)] md:hidden">
       <div className="flex h-14 items-center justify-around">
         {NAV_ITEMS.map((item) => {
           const isActive = location.pathname === item.path
@@ -115,7 +115,7 @@ export function AppLayout() {
             {NAV_ITEMS.find((item) => item.path === location.pathname)?.label}
           </span>
         </header>
-        <main className="flex-1 overflow-auto pb-16">
+        <main className="flex-1 overflow-auto pb-[calc(4rem+env(safe-area-inset-bottom))]">
           <Outlet />
         </main>
         <BottomNav />
