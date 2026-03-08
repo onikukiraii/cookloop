@@ -14,6 +14,7 @@ class HotcookRecipe(Base):
     name = Column(String(200), nullable=False)
     menu_num = Column(String(10), nullable=True)
     image_url = Column(String(500), nullable=True)
+    category = Column(String(20), nullable=True)
     created_at = Column(DateTime, default=lambda: datetime.now(UTC))
 
     ingredients = relationship("HotcookRecipeIngredient", back_populates="recipe", cascade="all, delete-orphan")

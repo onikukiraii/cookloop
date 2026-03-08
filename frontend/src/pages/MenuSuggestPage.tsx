@@ -1,4 +1,5 @@
-import { useCallback, useEffect, useState } from 'react'
+import { useCallback, useEffect, useMemo, useState } from 'react'
+import { useSessionState } from '@/hooks/use-session-state'
 import { ChefHat, ChevronDown, ChevronUp, RefreshCw, ShoppingCart, Sparkles, UtensilsCrossed } from 'lucide-react'
 import { toast } from 'sonner'
 import { Button } from '@/components/ui/button'
@@ -7,15 +8,30 @@ import { Checkbox } from '@/components/ui/checkbox'
 import { Skeleton } from '@/components/ui/skeleton'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { EmptyState } from '@/components/EmptyState'
+import { ProgressBar } from '@/components/ProgressBar'
 import { fridgeApi, suggestApi } from '@/api/fetcher'
 import type { FridgeItemResponse, SuggestedRecipe } from '@/api/constants'
+
+const CATEGORY_ORDER = ['主菜', '副菜', '汁物', '主食', 'デザート', 'その他'] as const
+
+function groupByCategory(recipes: SuggestedRecipe[]): { category: string; recipes: SuggestedRecipe[] }[] {
+  const groups = new Map<string, SuggestedRecipe[]>()
+  for (const recipe of recipes) {
+    const cat = recipe.category || 'その他'
+    if (!groups.has(cat)) groups.set(cat, [])
+    groups.get(cat)!.push(recipe)
+  }
+  return CATEGORY_ORDER
+    .filter((cat) => groups.has(cat))
+    .map((cat) => ({ category: cat, recipes: groups.get(cat)! }))
+}
 
 export function MenuSuggestPage() {
   const [fridgeItems, setFridgeItems] = useState<FridgeItemResponse[]>([])
   const [loading, setLoading] = useState(true)
   const [mode, setMode] = useState<'omakase' | 'ingredient'>('omakase')
   const [selectedIds, setSelectedIds] = useState<number[]>([])
-  const [suggestions, setSuggestions] = useState<SuggestedRecipe[] | null>(null)
+  const [suggestions, setSuggestions] = useSessionState<SuggestedRecipe[] | null>('menu-suggestions', null)
   const [suggesting, setSuggesting] = useState(false)
   const [expandedIndex, setExpandedIndex] = useState<number | null>(null)
   const [addingShoppingFor, setAddingShoppingFor] = useState<number | null>(null)
@@ -74,6 +90,19 @@ export function MenuSuggestPage() {
 
   const canSuggest = mode === 'omakase' || selectedIds.length > 0
 
+  const categorizedSuggestions = useMemo(
+    () => suggestions ? groupByCategory(suggestions) : null,
+    [suggestions],
+  )
+
+  // Build stable index map for RecipeCard keys
+  const recipeIndexMap = useMemo(() => {
+    if (!suggestions) return new Map<SuggestedRecipe, number>()
+    const map = new Map<SuggestedRecipe, number>()
+    suggestions.forEach((recipe, i) => map.set(recipe, i))
+    return map
+  }, [suggestions])
+
   return (
     <div className="mx-auto max-w-4xl space-y-6 p-6">
       <div>
@@ -131,7 +160,7 @@ export function MenuSuggestPage() {
             </TabsContent>
           </Tabs>
 
-          <div className="flex justify-center">
+          <div className="flex flex-col items-center gap-2">
             <Button
               size="lg"
               disabled={suggesting || !canSuggest}
@@ -139,13 +168,14 @@ export function MenuSuggestPage() {
               className="gap-2"
             >
               <Sparkles className="h-4 w-4" />
-              {suggesting ? 'AIが献立を考えています...' : '献立を提案してもらう'}
+              献立を提案してもらう
             </Button>
+            <ProgressBar visible={suggesting} />
           </div>
 
           {suggesting && (
             <div className="space-y-4">
-              {[1, 2, 3].map((i) => (
+              {[1, 2, 3, 4, 5, 6].map((i) => (
                 <div key={i} className="rounded-lg border p-4">
                   <Skeleton className="mb-3 h-6 w-48" />
                   <Skeleton className="mb-2 h-4 w-full" />
@@ -155,19 +185,40 @@ export function MenuSuggestPage() {
             </div>
           )}
 
-          {suggestions && (
-            <div className="space-y-4">
-              {suggestions.map((recipe, index) => (
-                <RecipeCard
-                  key={index}
-                  recipe={recipe}
-                  index={index}
-                  expanded={expandedIndex === index}
-                  onToggle={() => setExpandedIndex(expandedIndex === index ? null : index)}
-                  onAddShopping={(names) => handleAddShopping(index, names)}
-                  addingLoading={addingShoppingFor === index}
-                />
-              ))}
+          {categorizedSuggestions && (
+            <div className="space-y-6">
+              <Tabs defaultValue={categorizedSuggestions[0]?.category}>
+                <TabsList className="flex w-full">
+                  {categorizedSuggestions.map((group) => (
+                    <TabsTrigger key={group.category} value={group.category} className="flex-1">
+                      {group.category}
+                      <Badge variant="secondary" className="ml-1.5 px-1.5 py-0 text-[10px]">
+                        {group.recipes.length}
+                      </Badge>
+                    </TabsTrigger>
+                  ))}
+                </TabsList>
+                {categorizedSuggestions.map((group) => (
+                  <TabsContent key={group.category} value={group.category} className="mt-4">
+                    <div className="space-y-4">
+                      {group.recipes.map((recipe) => {
+                        const index = recipeIndexMap.get(recipe) ?? 0
+                        return (
+                          <RecipeCard
+                            key={index}
+                            recipe={recipe}
+                            index={index}
+                            expanded={expandedIndex === index}
+                            onToggle={() => setExpandedIndex(expandedIndex === index ? null : index)}
+                            onAddShopping={(names) => handleAddShopping(index, names)}
+                            addingLoading={addingShoppingFor === index}
+                          />
+                        )
+                      })}
+                    </div>
+                  </TabsContent>
+                ))}
+              </Tabs>
 
               <div className="flex justify-center pt-2">
                 <Button variant="outline" onClick={handleSuggest} disabled={suggesting} className="gap-2">
@@ -198,6 +249,8 @@ function RecipeCard({
   onAddShopping: (names: string[]) => void
   addingLoading: boolean
 }) {
+  const hasDetails = recipe.steps.length > 0 || recipe.materials.length > 0
+
   return (
     <div className="rounded-lg border bg-card shadow-sm">
       <div className="p-4">
@@ -262,27 +315,52 @@ function RecipeCard({
         )}
       </div>
 
-      {recipe.steps.length > 0 && (
+      {hasDetails && (
         <>
           <button
             onClick={onToggle}
             className="flex w-full items-center justify-between border-t px-4 py-2 text-sm font-medium text-muted-foreground transition-colors hover:bg-muted/50"
           >
-            手順を見る
+            {recipe.materials.length > 0 ? '材料・手順を見る' : '手順を見る'}
             {expanded ? <ChevronUp className="h-4 w-4" /> : <ChevronDown className="h-4 w-4" />}
           </button>
           {expanded && (
-            <div className="border-t px-4 py-3">
-              <ol className="space-y-2">
-                {recipe.steps.map((step) => (
-                  <li key={step.step_order} className="flex gap-3 text-sm">
-                    <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-primary/10 text-xs font-bold text-primary">
-                      {step.step_order}
-                    </span>
-                    <span className="pt-0.5">{step.text}</span>
-                  </li>
-                ))}
-              </ol>
+            <div className="border-t px-4 py-3 space-y-4">
+              {recipe.materials.length > 0 && (
+                <div>
+                  <h4 className="mb-2 text-sm font-semibold">材料</h4>
+                  <ul className="space-y-1">
+                    {recipe.materials.map((mat, i) => (
+                      <li key={i} className="flex items-baseline justify-between text-sm">
+                        <span>
+                          {mat.group_name && (
+                            <Badge variant="outline" className="mr-1.5 text-[10px] px-1 py-0">{mat.group_name}</Badge>
+                          )}
+                          {mat.name}
+                        </span>
+                        {mat.quantity && (
+                          <span className="ml-2 shrink-0 text-muted-foreground">{mat.quantity}</span>
+                        )}
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+              )}
+              {recipe.steps.length > 0 && (
+                <div>
+                  {recipe.materials.length > 0 && <h4 className="mb-2 text-sm font-semibold">手順</h4>}
+                  <ol className="space-y-2">
+                    {recipe.steps.map((step) => (
+                      <li key={step.step_order} className="flex gap-3 text-sm">
+                        <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-primary/10 text-xs font-bold text-primary">
+                          {step.step_order}
+                        </span>
+                        <span className="pt-0.5">{step.text}</span>
+                      </li>
+                    ))}
+                  </ol>
+                </div>
+              )}
             </div>
           )}
         </>

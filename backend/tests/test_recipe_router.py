@@ -5,6 +5,7 @@ from sqlalchemy.orm import Session
 
 from entity.hotcook_recipe import HotcookRecipe
 from entity.hotcook_recipe_ingredient import HotcookRecipeIngredient
+from entity.hotcook_recipe_material import HotcookRecipeMaterial
 from entity.hotcook_recipe_step import HotcookRecipeStep
 from entity.ingredient_master import IngredientMaster
 
@@ -15,6 +16,7 @@ def _create_recipe(
     name: str = "肉じゃが",
     ingredients: list[IngredientMaster] | None = None,
     steps: list[str] | None = None,
+    materials: list[dict[str, str | int | None]] | None = None,
 ) -> HotcookRecipe:
     recipe = HotcookRecipe(code=code, name=name)
     db_session.add(recipe)
@@ -25,6 +27,17 @@ def _create_recipe(
 
     for i, text in enumerate(steps or [], 1):
         db_session.add(HotcookRecipeStep(recipe_id=recipe.id, step_order=i, text=text))
+
+    for mat in materials or []:
+        db_session.add(
+            HotcookRecipeMaterial(
+                recipe_id=recipe.id,
+                material_order=mat.get("order", 1),
+                name=mat["name"],
+                quantity=mat.get("quantity"),
+                group_name=mat.get("group_name"),
+            )
+        )
 
     db_session.commit()
     db_session.refresh(recipe)
@@ -112,6 +125,10 @@ class TestGetRecipeDetail:
             name="肉じゃが",
             ingredients=[master],
             steps=["材料を切る", "煮込む"],
+            materials=[
+                {"name": "じゃがいも", "quantity": "2個", "group_name": None, "order": 1},
+                {"name": "しょうゆ", "quantity": "大さじ2", "group_name": "A", "order": 2},
+            ],
         )
 
         res = client.get(f"/recipes/{recipe.id}")
@@ -121,9 +138,35 @@ class TestGetRecipeDetail:
         assert data["source_url"].endswith("/R0001")
         assert len(data["ingredients"]) == 1
         assert data["ingredients"][0]["name"] == "じゃがいも"
+        assert len(data["materials"]) == 2
+        assert data["materials"][0]["name"] == "じゃがいも"
+        assert data["materials"][0]["quantity"] == "2個"
+        assert data["materials"][0]["group_name"] is None
+        assert data["materials"][1]["name"] == "しょうゆ"
+        assert data["materials"][1]["group_name"] == "A"
         assert len(data["steps"]) == 2
         assert data["steps"][0]["step_order"] == 1
         assert data["steps"][0]["text"] == "材料を切る"
+
+    def test_materials_ordered_by_material_order(
+        self,
+        client: TestClient,
+        db_session: Session,
+    ) -> None:
+        recipe = _create_recipe(
+            db_session,
+            name="カレー",
+            materials=[
+                {"name": "カレールー", "quantity": "1箱", "order": 3},
+                {"name": "玉ねぎ", "quantity": "2個", "order": 1},
+                {"name": "にんじん", "quantity": "1本", "order": 2},
+            ],
+        )
+
+        res = client.get(f"/recipes/{recipe.id}")
+        assert res.status_code == 200
+        materials = res.json()["materials"]
+        assert [m["name"] for m in materials] == ["玉ねぎ", "にんじん", "カレールー"]
 
     def test_not_found(self, client: TestClient) -> None:
         res = client.get("/recipes/9999")

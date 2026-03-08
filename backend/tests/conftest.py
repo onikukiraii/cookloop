@@ -17,6 +17,7 @@ from entity.condiment_item import CondimentItem  # noqa: E402
 from entity.fridge_item import FridgeItem  # noqa: E402
 from entity.hotcook_recipe import HotcookRecipe  # noqa: E402
 from entity.hotcook_recipe_ingredient import HotcookRecipeIngredient  # noqa: E402
+from entity.hotcook_recipe_material import HotcookRecipeMaterial  # noqa: E402
 from entity.hotcook_recipe_step import HotcookRecipeStep  # noqa: E402
 from entity.ingredient_master import IngredientMaster  # noqa: E402
 from entity.shopping_item import ShoppingItem  # noqa: E402
@@ -153,8 +154,9 @@ def create_hotcook_recipe(db_session: Session) -> Callable[..., HotcookRecipe]:
         name: str = "テストレシピ",
         menu_num: str | None = "0001",
         image_url: str | None = None,
+        category: str | None = None,
     ) -> HotcookRecipe:
-        recipe = HotcookRecipe(code=code, name=name, menu_num=menu_num, image_url=image_url)
+        recipe = HotcookRecipe(code=code, name=name, menu_num=menu_num, image_url=image_url, category=category)
         db_session.add(recipe)
         db_session.commit()
         db_session.refresh(recipe)
@@ -174,6 +176,30 @@ def create_hotcook_recipe_ingredient(db_session: Session) -> Callable[..., Hotco
         db_session.commit()
         db_session.refresh(ri)
         return ri
+
+    return _factory
+
+
+@pytest.fixture()
+def create_hotcook_recipe_material(db_session: Session) -> Callable[..., HotcookRecipeMaterial]:
+    def _factory(
+        recipe: HotcookRecipe,
+        material_order: int = 1,
+        name: str = "じゃがいも",
+        quantity: str | None = "2個",
+        group_name: str | None = None,
+    ) -> HotcookRecipeMaterial:
+        material = HotcookRecipeMaterial(
+            recipe_id=recipe.id,
+            material_order=material_order,
+            name=name,
+            quantity=quantity,
+            group_name=group_name,
+        )
+        db_session.add(material)
+        db_session.commit()
+        db_session.refresh(material)
+        return material
 
     return _factory
 
