@@ -57,6 +57,8 @@ RECIPES_MAPPING: dict[str, Any] = {
         "properties": {
             "id": {"type": "integer"},
             "name": {"type": "text", "analyzer": "kuromoji_normalize"},
+            "name_yomi": {"type": "text", "analyzer": "kuromoji_normalize"},
+            "name_aliases": {"type": "text", "analyzer": "kuromoji_normalize"},
             "ingredient_names": {"type": "text", "analyzer": "kuromoji_normalize"},
             "category": {"type": "keyword"},
             "code": {"type": "keyword"},
@@ -126,6 +128,8 @@ class RecipeSearchClient:
         code: str | None = None,
         menu_num: str | None = None,
         image_url: str | None = None,
+        name_yomi: str | None = None,
+        name_aliases: list[str] | None = None,
     ) -> None:
         doc: dict[str, Any] = {
             "id": recipe_id,
@@ -140,21 +144,35 @@ class RecipeSearchClient:
             doc["menu_num"] = menu_num
         if image_url is not None:
             doc["image_url"] = image_url
+        if name_yomi is not None:
+            doc["name_yomi"] = name_yomi
+        if name_aliases is not None:
+            doc["name_aliases"] = " ".join(name_aliases)
         self._client.index(index=RECIPES_INDEX, id=str(recipe_id), body=doc)
 
-    def search(self, query: str, size: int = 50) -> list[dict[str, Any]]:
+    def search(
+        self,
+        query: str,
+        size: int = 50,
+        ingredient_expansions: list[str] | None = None,
+    ) -> list[dict[str, Any]]:
+        should: list[dict[str, Any]] = [
+            {
+                "multi_match": {
+                    "query": query,
+                    "fields": ["name^2", "name_yomi^2", "name_aliases^2", "ingredient_names"],
+                }
+            },
+            {"wildcard": {"name": {"value": f"*{query}*"}}},
+            {"wildcard": {"name_yomi": {"value": f"*{query}*"}}},
+        ]
+        if ingredient_expansions:
+            for ing_name in ingredient_expansions:
+                should.append({"match": {"ingredient_names": {"query": ing_name}}})
         body: dict[str, Any] = {
             "query": {
                 "bool": {
-                    "should": [
-                        {
-                            "multi_match": {
-                                "query": query,
-                                "fields": ["name^2", "ingredient_names"],
-                            }
-                        },
-                        {"wildcard": {"name": {"value": f"*{query}*"}}},
-                    ],
+                    "should": should,
                     "minimum_should_match": 1,
                 }
             },

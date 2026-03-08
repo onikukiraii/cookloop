@@ -41,6 +41,16 @@ def load_aliases_map() -> dict[str, dict]:
     return {item["name"]: item for item in data}
 
 
+def load_recipe_yomi_map() -> dict[str, dict]:
+    """recipe_yomi.json から name -> {yomi, aliases} のマップを作る。"""
+    path = DATA_DIR / "recipe_yomi.json"
+    if not path.exists():
+        return {}
+    with open(path, encoding="utf-8") as f:
+        data = json.load(f)
+    return {item["name"]: item for item in data}
+
+
 def main() -> None:
     import os
 
@@ -75,6 +85,8 @@ def main() -> None:
         recipe_client = create_recipe_search_client()
         recipe_client.ensure_index()
 
+        recipe_yomi_map = load_recipe_yomi_map()
+
         recipes = (
             session.query(HotcookRecipe)
             .options(
@@ -92,6 +104,7 @@ def main() -> None:
                 for ri in recipe.ingredients
                 if ri.ingredient_master
             ]
+            yomi_data = recipe_yomi_map.get(recipe.name, {})
             recipe_client.upsert(
                 recipe_id=recipe.id,
                 name=recipe.name,
@@ -100,6 +113,8 @@ def main() -> None:
                 code=recipe.code,
                 menu_num=recipe.menu_num,
                 image_url=recipe.image_url,
+                name_yomi=yomi_data.get("yomi"),
+                name_aliases=yomi_data.get("aliases"),
             )
 
         print("Recipes done!")

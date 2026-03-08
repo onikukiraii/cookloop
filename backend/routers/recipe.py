@@ -8,7 +8,7 @@ from db.session import get_db
 from entity.hotcook_recipe import HotcookRecipe
 from entity.hotcook_recipe_ingredient import HotcookRecipeIngredient
 from entity.ingredient_master import IngredientMaster
-from lib.opensearch import create_recipe_search_client
+from lib.opensearch import create_ingredient_search_client, create_recipe_search_client
 from response.recipe import (
     RecipeDetailResponse,
     RecipeIngredientResponse,
@@ -37,10 +37,22 @@ def search_recipes(
     return _search_via_db(q, db)
 
 
+def _resolve_ingredient_expansions(q: str) -> list[str]:
+    """ひらがな等のクエリを食材インデックスで検索し、漢字名に展開する。"""
+    try:
+        ing_client = create_ingredient_search_client()
+        ing_hits = ing_client.search(q, size=20)
+        return [hit["name"] for hit in ing_hits if "name" in hit]
+    except Exception:
+        logger.debug("Ingredient expansion failed", exc_info=True)
+        return []
+
+
 def _search_via_opensearch(q: str, db: Session) -> list[RecipeListResponse]:
     try:
+        ingredient_expansions = _resolve_ingredient_expansions(q)
         client = create_recipe_search_client()
-        hits = client.search(q)
+        hits = client.search(q, ingredient_expansions=ingredient_expansions or None)
     except Exception:
         logger.warning("OpenSearch unavailable, falling back to DB search", exc_info=True)
         return _search_via_db(q, db)

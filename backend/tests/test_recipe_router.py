@@ -1,4 +1,5 @@
 from collections.abc import Callable
+from unittest.mock import MagicMock, patch
 
 from fastapi.testclient import TestClient
 from sqlalchemy.orm import Session
@@ -171,3 +172,64 @@ class TestGetRecipeDetail:
     def test_not_found(self, client: TestClient) -> None:
         res = client.get("/api/recipes/9999")
         assert res.status_code == 404
+
+
+class TestHiraganaSearch:
+    """ひらがな入力が食材インデックス経由で解決されることのテスト。"""
+
+    def test_search_hiragana_resolves_via_ingredient_index(
+        self,
+        client: TestClient,
+        db_session: Session,
+        create_ingredient_master: Callable[..., IngredientMaster],
+    ) -> None:
+        pork = create_ingredient_master(name="豚肉")
+        recipe = _create_recipe(db_session, name="豚の角煮", code="R0010", ingredients=[pork])
+
+        mock_ing_client = MagicMock()
+        mock_ing_client.search.return_value = [{"name": "豚肉"}, {"name": "豚バラ肉"}]
+
+        mock_recipe_client = MagicMock()
+        mock_recipe_client.search.return_value = [{"id": recipe.id}]
+
+        with (
+            patch("routers.recipe.create_ingredient_search_client", return_value=mock_ing_client),
+            patch("routers.recipe.create_recipe_search_client", return_value=mock_recipe_client),
+        ):
+            res = client.get("/api/recipes/?q=ぶた")
+
+        assert res.status_code == 200
+        data = res.json()
+        assert len(data) == 1
+        assert data[0]["name"] == "豚の角煮"
+
+        # 食材インデックスが「ぶた」で検索された
+        mock_ing_client.search.assert_called_once_with("ぶた", size=20)
+        # レシピ検索に展開された食材名が渡された
+        mock_recipe_client.search.assert_called_once_with("ぶた", ingredient_expansions=["豚肉", "豚バラ肉"])
+
+    def test_search_kanji_still_works(
+        self,
+        client: TestClient,
+        db_session: Session,
+        create_ingredient_master: Callable[..., IngredientMaster],
+    ) -> None:
+        pork = create_ingredient_master(name="豚肉")
+        recipe = _create_recipe(db_session, name="豚の角煮", code="R0010", ingredients=[pork])
+
+        mock_ing_client = MagicMock()
+        mock_ing_client.search.return_value = [{"name": "豚肉"}]
+
+        mock_recipe_client = MagicMock()
+        mock_recipe_client.search.return_value = [{"id": recipe.id}]
+
+        with (
+            patch("routers.recipe.create_ingredient_search_client", return_value=mock_ing_client),
+            patch("routers.recipe.create_recipe_search_client", return_value=mock_recipe_client),
+        ):
+            res = client.get("/api/recipes/?q=豚")
+
+        assert res.status_code == 200
+        data = res.json()
+        assert len(data) == 1
+        assert data[0]["name"] == "豚の角煮"
