@@ -2,44 +2,38 @@ services:
   frontend:
     build:
       context: ./frontend
-      dockerfile: docker/Dockerfile
+      dockerfile: docker/Dockerfile.prod
     ports:
-      - 5173:5173
-    volumes:
-      - ./frontend:/app
-      - /app/node_modules
-    environment:
-      VITE_API_BASE_URL: http://localhost:8000/api
+      - 80:80
+    depends_on:
+      - api
+    restart: always
 
   api:
     build:
       context: ./backend
       dockerfile: docker/Dockerfile
-    ports:
-      - 8000:8000
-    volumes:
-      - ./backend:/app
-      - /app/.venv
     env_file:
       - .env
     environment:
-      DATABASE_URL: mysql+pymysql://app:password@db:3306/cookloop
+      DATABASE_URL: mysql+pymysql://${MYSQL_USER:-app}:${MYSQL_PASSWORD}@db:3306/${MYSQL_DATABASE:-cookloop}
       OPENSEARCH_URL: http://opensearch:9200
-    command: ["uv", "run", "fastapi", "dev", "--host", "0.0.0.0", "--port", "8000"]
+    command: ["uv", "run", "fastapi", "run", "--host", "0.0.0.0", "--port", "8000"]
     depends_on:
       - db
       - opensearch
+    restart: always
+
   db:
     image: mysql:8.0
     environment:
-      MYSQL_ROOT_PASSWORD: password
-      MYSQL_USER: app
-      MYSQL_PASSWORD: password
-      MYSQL_DATABASE: cookloop
-    ports:
-      - 3309:3306
+      MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD}
+      MYSQL_USER: ${MYSQL_USER:-app}
+      MYSQL_PASSWORD: ${MYSQL_PASSWORD}
+      MYSQL_DATABASE: ${MYSQL_DATABASE:-cookloop}
     volumes:
       - mysql-data:/var/lib/mysql
+    restart: always
 
   opensearch:
     build:
@@ -48,12 +42,10 @@ services:
       - discovery.type=single-node
       - DISABLE_SECURITY_PLUGIN=true
       - DISABLE_INSTALL_DEMO_CONFIG=true
-    ports:
-      - 9205:9200
     volumes:
       - opensearch-data:/usr/share/opensearch/data
+    restart: always
 
 volumes:
   mysql-data:
   opensearch-data:
-

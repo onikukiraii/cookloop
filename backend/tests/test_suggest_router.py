@@ -98,7 +98,7 @@ def test_suggest_omakase(
     mock_client.generate_json.return_value = MOCK_GEMINI_RESPONSE
     mock_create_gemini.return_value = mock_client
 
-    res = client.post("/recipe/suggest", json={"mode": "omakase"})
+    res = client.post("/api/recipe/suggest", json={"mode": "omakase"})
     assert res.status_code == 200
     data = res.json()
 
@@ -152,7 +152,7 @@ def test_suggest_ingredient_mode(
     mock_create_gemini.return_value = mock_client
 
     res = client.post(
-        "/recipe/suggest",
+        "/api/recipe/suggest",
         json={"mode": "ingredient", "ingredient_master_ids": [pork.id]},
     )
     assert res.status_code == 200
@@ -166,7 +166,7 @@ def test_suggest_empty_fridge(mock_create_gemini: MagicMock, client: Any) -> Non
     mock_client = MagicMock()
     mock_create_gemini.return_value = mock_client
 
-    res = client.post("/recipe/suggest", json={"mode": "omakase"})
+    res = client.post("/api/recipe/suggest", json={"mode": "omakase"})
     assert res.status_code == 400
     assert "冷蔵庫に食材がありません" in res.json()["detail"]
     mock_client.generate_json.assert_not_called()
@@ -181,7 +181,7 @@ def test_add_shopping(
     create_ingredient_master(name="玉ねぎ", default_expiry_days=14)
 
     res = client.post(
-        "/recipe/suggest/add-shopping",
+        "/api/recipe/suggest/add-shopping",
         json={"ingredient_names": ["豚バラ肉", "玉ねぎ", "存在しない食材"]},
     )
     assert res.status_code == 200
@@ -203,7 +203,7 @@ def test_add_shopping_no_duplicate(
     create_shopping_item(ingredient_master=pork, source="manual")
 
     res = client.post(
-        "/recipe/suggest/add-shopping",
+        "/api/recipe/suggest/add-shopping",
         json={"ingredient_names": ["豚バラ肉"]},
     )
     assert res.status_code == 200

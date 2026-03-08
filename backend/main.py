@@ -18,7 +18,7 @@ logger = logging.getLogger(__name__)
 app = FastAPI()
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["http://localhost:5173"],
+    allow_origins=["http://localhost:5173", "http://localhost"],
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
@@ -43,10 +43,10 @@ async def general_exception_handler(request: Request, exc: Exception) -> JSONRes
     )
 
 
-app.include_router(user_router)
-app.include_router(ingredient_master_router)
-app.include_router(fridge_router)
-app.include_router(condiment_router)
-app.include_router(recipe_router)
-app.include_router(suggest_router)
-app.include_router(shopping_router)
+app.include_router(user_router, prefix="/api")
+app.include_router(ingredient_master_router, prefix="/api")
+app.include_router(fridge_router, prefix="/api")
+app.include_router(condiment_router, prefix="/api")
+app.include_router(recipe_router, prefix="/api")
+app.include_router(suggest_router, prefix="/api")
+app.include_router(shopping_router, prefix="/api")

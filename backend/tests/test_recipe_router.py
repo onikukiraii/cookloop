@@ -55,7 +55,7 @@ class TestSearchRecipes:
         _create_recipe(db_session, name="肉じゃが", ingredients=[master])
         _create_recipe(db_session, code="R0002", name="カレー", ingredients=[master])
 
-        res = client.get("/recipes/?q=肉じゃが")
+        res = client.get("/api/recipes/?q=肉じゃが")
         assert res.status_code == 200
         data = res.json()
         assert len(data) == 1
@@ -73,7 +73,7 @@ class TestSearchRecipes:
         _create_recipe(db_session, name="トマトスープ", ingredients=[tomato])
         _create_recipe(db_session, code="R0002", name="肉じゃが", ingredients=[potato])
 
-        res = client.get("/recipes/?q=トマト")
+        res = client.get("/api/recipes/?q=トマト")
         assert res.status_code == 200
         data = res.json()
         names = [r["name"] for r in data]
@@ -93,7 +93,7 @@ class TestSearchRecipes:
         _create_recipe(db_session, code="R0003", name="唐揚げ", ingredients=[chicken])
 
         # "トマト 鶏肉" → トマトチキンカレーだけヒット
-        res = client.get("/recipes/?q=トマト 鶏肉")
+        res = client.get("/api/recipes/?q=トマト 鶏肉")
         assert res.status_code == 200
         data = res.json()
         assert len(data) == 1
@@ -107,7 +107,7 @@ class TestSearchRecipes:
         _create_recipe(db_session, name="肉じゃが")
         _create_recipe(db_session, code="R0002", name="カレー")
 
-        res = client.get("/recipes/")
+        res = client.get("/api/recipes/")
         assert res.status_code == 200
         assert len(res.json()) == 2
 
@@ -131,7 +131,7 @@ class TestGetRecipeDetail:
             ],
         )
 
-        res = client.get(f"/recipes/{recipe.id}")
+        res = client.get(f"/api/recipes/{recipe.id}")
         assert res.status_code == 200
         data = res.json()
         assert data["name"] == "肉じゃが"
@@ -163,11 +163,11 @@ class TestGetRecipeDetail:
             ],
         )
 
-        res = client.get(f"/recipes/{recipe.id}")
+        res = client.get(f"/api/recipes/{recipe.id}")
         assert res.status_code == 200
         materials = res.json()["materials"]
         assert [m["name"] for m in materials] == ["玉ねぎ", "にんじん", "カレールー"]
 
     def test_not_found(self, client: TestClient) -> None:
-        res = client.get("/recipes/9999")
+        res = client.get("/api/recipes/9999")
         assert res.status_code == 404

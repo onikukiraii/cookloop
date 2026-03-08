@@ -10,7 +10,7 @@ from entity.shopping_item import ShoppingItem
 
 class TestGetShoppingItems:
     def test_empty(self, client: TestClient) -> None:
-        resp = client.get("/shopping/")
+        resp = client.get("/api/shopping/")
         assert resp.status_code == 200
         assert resp.json() == []
 
@@ -22,7 +22,7 @@ class TestGetShoppingItems:
     ) -> None:
         master = create_ingredient_master(name="トマト")
         create_shopping_item(ingredient_master=master)
-        resp = client.get("/shopping/")
+        resp = client.get("/api/shopping/")
         assert resp.status_code == 200
         data = resp.json()
         assert len(data) == 1
@@ -37,8 +37,8 @@ class TestGetShoppingItems:
     ) -> None:
         master = create_ingredient_master(name="トマト")
         item = create_shopping_item(ingredient_master=master)
-        client.patch(f"/shopping/{item.id}/check")
-        resp = client.get("/shopping/")
+        client.patch(f"/api/shopping/{item.id}/check")
+        resp = client.get("/api/shopping/")
         assert resp.status_code == 200
         assert resp.json() == []
 
@@ -47,7 +47,7 @@ class TestCreateShoppingItem:
     def test_create(self, client: TestClient, create_ingredient_master: Callable[..., IngredientMaster]) -> None:
         master = create_ingredient_master(name="トマト")
         resp = client.post(
-            "/shopping/",
+            "/api/shopping/",
             json={"ingredient_master_id": master.id},
         )
         assert resp.status_code == 200
@@ -58,7 +58,7 @@ class TestCreateShoppingItem:
 
     def test_invalid_master(self, client: TestClient) -> None:
         resp = client.post(
-            "/shopping/",
+            "/api/shopping/",
             json={"ingredient_master_id": 9999},
         )
         assert resp.status_code == 404
@@ -74,7 +74,7 @@ class TestCheckShoppingItem:
     ) -> None:
         master = create_ingredient_master(name="トマト", default_expiry_days=7)
         item = create_shopping_item(ingredient_master=master)
-        resp = client.patch(f"/shopping/{item.id}/check")
+        resp = client.patch(f"/api/shopping/{item.id}/check")
         assert resp.status_code == 200
         data = resp.json()
         assert data["is_checked"] is True
@@ -85,7 +85,7 @@ class TestCheckShoppingItem:
         assert fridge_items[0].ingredient_master_id == master.id
 
     def test_not_found(self, client: TestClient) -> None:
-        resp = client.patch("/shopping/9999/check")
+        resp = client.patch("/api/shopping/9999/check")
         assert resp.status_code == 404
 
 
@@ -98,9 +98,9 @@ class TestDeleteShoppingItem:
     ) -> None:
         master = create_ingredient_master(name="トマト")
         item = create_shopping_item(ingredient_master=master)
-        resp = client.delete(f"/shopping/{item.id}")
+        resp = client.delete(f"/api/shopping/{item.id}")
         assert resp.status_code == 204
 
     def test_not_found(self, client: TestClient) -> None:
-        resp = client.delete("/shopping/9999")
+        resp = client.delete("/api/shopping/9999")
         assert resp.status_code == 404

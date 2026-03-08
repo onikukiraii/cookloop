@@ -10,7 +10,7 @@ from entity.shopping_item import ShoppingItem
 
 class TestGetFridgeItems:
     def test_empty(self, client: TestClient) -> None:
-        resp = client.get("/fridge/")
+        resp = client.get("/api/fridge/")
         assert resp.status_code == 200
         assert resp.json() == []
 
@@ -22,7 +22,7 @@ class TestGetFridgeItems:
     ) -> None:
         master = create_ingredient_master(name="トマト")
         create_fridge_item(ingredient_master=master, expiry_date="2026-03-10")
-        resp = client.get("/fridge/")
+        resp = client.get("/api/fridge/")
         assert resp.status_code == 200
         data = resp.json()
         assert len(data) == 1
@@ -33,7 +33,7 @@ class TestCreateFridgeItem:
     def test_create(self, client: TestClient, create_ingredient_master: Callable[..., IngredientMaster]) -> None:
         master = create_ingredient_master(name="トマト")
         resp = client.post(
-            "/fridge/",
+            "/api/fridge/",
             json={"ingredient_master_id": master.id, "expiry_date": "2026-03-14"},
         )
         assert resp.status_code == 200
@@ -45,7 +45,7 @@ class TestCreateFridgeItem:
     def test_auto_expiry(self, client: TestClient, create_ingredient_master: Callable[..., IngredientMaster]) -> None:
         master = create_ingredient_master(name="トマト", default_expiry_days=7)
         resp = client.post(
-            "/fridge/",
+            "/api/fridge/",
             json={"ingredient_master_id": master.id},
         )
         assert resp.status_code == 200
@@ -54,7 +54,7 @@ class TestCreateFridgeItem:
 
     def test_invalid_master(self, client: TestClient) -> None:
         resp = client.post(
-            "/fridge/",
+            "/api/fridge/",
             json={"ingredient_master_id": 9999},
         )
         assert resp.status_code == 404
@@ -69,7 +69,7 @@ class TestUpdateFridgeItem:
     ) -> None:
         master = create_ingredient_master(name="トマト")
         item = create_fridge_item(ingredient_master=master)
-        resp = client.patch(f"/fridge/{item.id}", json={"quantity_status": "half"})
+        resp = client.patch(f"/api/fridge/{item.id}", json={"quantity_status": "half"})
         assert resp.status_code == 200
         assert resp.json()["quantity_status"] == "half"
 
@@ -82,7 +82,7 @@ class TestUpdateFridgeItem:
     ) -> None:
         master = create_ingredient_master(name="納豆", is_staple=True)
         item = create_fridge_item(ingredient_master=master)
-        resp = client.patch(f"/fridge/{item.id}", json={"quantity_status": "little"})
+        resp = client.patch(f"/api/fridge/{item.id}", json={"quantity_status": "little"})
         assert resp.status_code == 200
         shopping_items = db_session.query(ShoppingItem).all()
         assert len(shopping_items) == 1
@@ -98,7 +98,7 @@ class TestUpdateFridgeItem:
     ) -> None:
         master = create_ingredient_master(name="トマト", is_staple=False)
         item = create_fridge_item(ingredient_master=master)
-        resp = client.patch(f"/fridge/{item.id}", json={"quantity_status": "little"})
+        resp = client.patch(f"/api/fridge/{item.id}", json={"quantity_status": "little"})
         assert resp.status_code == 200
         shopping_items = db_session.query(ShoppingItem).all()
         assert len(shopping_items) == 0
@@ -114,13 +114,13 @@ class TestUpdateFridgeItem:
         master = create_ingredient_master(name="納豆", is_staple=True)
         item = create_fridge_item(ingredient_master=master)
         create_shopping_item(ingredient_master=master, source="manual")
-        resp = client.patch(f"/fridge/{item.id}", json={"quantity_status": "little"})
+        resp = client.patch(f"/api/fridge/{item.id}", json={"quantity_status": "little"})
         assert resp.status_code == 200
         shopping_items = db_session.query(ShoppingItem).all()
         assert len(shopping_items) == 1
 
     def test_not_found(self, client: TestClient) -> None:
-        resp = client.patch("/fridge/9999", json={"quantity_status": "half"})
+        resp = client.patch("/api/fridge/9999", json={"quantity_status": "half"})
         assert resp.status_code == 404
 
 
@@ -133,9 +133,9 @@ class TestDeleteFridgeItem:
     ) -> None:
         master = create_ingredient_master(name="トマト")
         item = create_fridge_item(ingredient_master=master)
-        resp = client.delete(f"/fridge/{item.id}")
+        resp = client.delete(f"/api/fridge/{item.id}")
         assert resp.status_code == 204
 
     def test_not_found(self, client: TestClient) -> None:
-        resp = client.delete("/fridge/9999")
+        resp = client.delete("/api/fridge/9999")
         assert resp.status_code == 404
