@@ -9,7 +9,9 @@ ENV PYTHONUNBUFFERED=1
 WORKDIR /app
 
 COPY --from=ghcr.io/astral-sh/uv:latest /uv /uvx /bin/
-COPY pyproject.toml uv.lock* ./
+COPY backend/pyproject.toml backend/uv.lock* ./
 RUN uv sync --frozen --no-dev --no-install-project
-COPY . .
+COPY backend/ .
 RUN uv sync --frozen --no-dev
+
+COPY scripts/ /scripts/

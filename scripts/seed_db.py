@@ -3,13 +3,19 @@
 Usage:
     cd backend && DATABASE_URL=mysql+pymysql://app:password@localhost:3309/cookloop \
         uv run python ../scripts/seed_db.py
+
+    # Docker container:
+    docker compose -f compose.prod.yaml exec api uv run python /scripts/seed_db.py
 """
 
 import json
+import os
 import sys
 from pathlib import Path
 
-sys.path.insert(0, str(Path(__file__).resolve().parent.parent / "backend"))
+# ローカル: scripts/../backend, コンテナ: /app (WORKDIR)
+_backend_dir = Path(__file__).resolve().parent.parent / "backend"
+sys.path.insert(0, str(_backend_dir) if _backend_dir.exists() else os.getcwd())
 
 from sqlalchemy import create_engine, text
 from sqlalchemy.orm import Session, sessionmaker

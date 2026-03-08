@@ -6,13 +6,19 @@
 Usage:
     cd backend && DATABASE_URL=mysql+pymysql://app:password@localhost:3309/cookloop \
         uv run python ../scripts/sync_opensearch.py
+
+    # Docker container:
+    docker compose -f compose.prod.yaml exec api uv run python /scripts/sync_opensearch.py
 """
 
 import json
+import os
 import sys
 from pathlib import Path
 
-sys.path.insert(0, str(Path(__file__).resolve().parent.parent / "backend"))
+# ローカル: scripts/../backend, コンテナ: /app (WORKDIR)
+_backend_dir = Path(__file__).resolve().parent.parent / "backend"
+sys.path.insert(0, str(_backend_dir) if _backend_dir.exists() else os.getcwd())
 
 from sqlalchemy import create_engine
 from sqlalchemy.orm import joinedload, sessionmaker
@@ -38,7 +44,9 @@ def load_aliases_map() -> dict[str, dict]:
 def main() -> None:
     import os
 
-    database_url = os.environ.get("DATABASE_URL", "mysql+pymysql://app:password@localhost:3309/cookloop")
+    database_url = os.environ.get(
+        "DATABASE_URL", "mysql+pymysql://app:password@localhost:3309/cookloop"
+    )
     engine = create_engine(database_url, echo=False)
     session_factory = sessionmaker(bind=engine)
 
@@ -70,7 +78,9 @@ def main() -> None:
         recipes = (
             session.query(HotcookRecipe)
             .options(
-                joinedload(HotcookRecipe.ingredients).joinedload(HotcookRecipeIngredient.ingredient_master),
+                joinedload(HotcookRecipe.ingredients).joinedload(
+                    HotcookRecipeIngredient.ingredient_master
+                ),
             )
             .all()
         )
@@ -78,7 +88,9 @@ def main() -> None:
 
         for recipe in recipes:
             ingredient_names = [
-                ri.ingredient_master.name for ri in recipe.ingredients if ri.ingredient_master
+                ri.ingredient_master.name
+                for ri in recipe.ingredients
+                if ri.ingredient_master
             ]
             recipe_client.upsert(
                 recipe_id=recipe.id,

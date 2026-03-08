@@ -11,8 +11,8 @@ services:
 
   api:
     build:
-      context: ./backend
-      dockerfile: docker/Dockerfile
+      context: .
+      dockerfile: backend/docker/Dockerfile
     env_file:
       - .env
     environment:
