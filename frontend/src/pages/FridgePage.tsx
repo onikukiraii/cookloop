@@ -162,7 +162,7 @@ export function FridgePage() {
                   <div className="flex items-center gap-2">
                     <span className="truncate font-medium">{item.ingredient_name}</span>
                     {item.is_staple && (
-                      <Star className="h-4 w-4 shrink-0 fill-staple-flag text-staple-flag" title="定番食材" />
+                      <span title="定番食材"><Star className="h-4 w-4 shrink-0 fill-staple-flag text-staple-flag" /></span>
                     )}
                   </div>
                   <div className="flex items-center gap-2">
