@@ -273,6 +273,8 @@ function RecipeCard({
   addingLoading,
   fridgeItems,
   onCookComplete,
+  isFavorite,
+  onToggleFavorite,
 }: {
   recipe: SuggestedRecipe
   index: number

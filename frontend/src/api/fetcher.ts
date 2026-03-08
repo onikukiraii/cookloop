@@ -42,20 +42,20 @@ export function unwrap<T>(result: { data?: T; error?: unknown }): T {
 
 export const ingredientsApi = {
   list: async () => {
-    const res = await api.GET('/ingredients/')
+    const res = await api.GET('/api/ingredients/')
     return unwrap<IngredientMasterResponse[]>(res)
   },
   create: async (body: IngredientMasterCreateParams) => {
-    const res = await api.POST('/ingredients/', { body })
+    const res = await api.POST('/api/ingredients/', { body })
     return unwrap<IngredientMasterResponse>(res)
   },
   search: async (q: string): Promise<{ id: number; name: string; aliases?: string[]; yomi?: string }[]> => {
-    const res = await fetch(`${BASE_URL}/ingredients/search?q=${encodeURIComponent(q)}`)
+    const res = await fetch(`${BASE_URL}/api/ingredients/search?q=${encodeURIComponent(q)}`)
     if (!res.ok) throw new Error('検索に失敗しました')
     return res.json()
   },
   update: async (id: number, body: { default_expiry_days?: number; is_staple?: boolean }) => {
-    const res = await fetch(`${BASE_URL}/ingredients/${id}`, {
+    const res = await fetch(`${BASE_URL}/api/ingredients/${id}`, {
       method: 'PATCH',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(body),
@@ -71,26 +71,26 @@ export const ingredientsApi = {
 export const fridgeApi = {
   list: async (q?: string) => {
     if (q) {
-      const res = await fetch(`${BASE_URL}/fridge/?q=${encodeURIComponent(q)}`)
+      const res = await fetch(`${BASE_URL}/api/fridge/?q=${encodeURIComponent(q)}`)
       if (!res.ok) throw new Error('検索に失敗しました')
       return res.json() as Promise<FridgeItemResponse[]>
     }
-    const res = await api.GET('/fridge/')
+    const res = await api.GET('/api/fridge/')
     return unwrap<FridgeItemResponse[]>(res)
   },
   create: async (body: FridgeItemCreateParams) => {
-    const res = await api.POST('/fridge/', { body })
+    const res = await api.POST('/api/fridge/', { body })
     return unwrap<FridgeItemResponse>(res)
   },
   update: async (id: number, quantity_status: QuantityStatus) => {
-    const res = await api.PATCH('/fridge/{item_id}', {
+    const res = await api.PATCH('/api/fridge/{item_id}', {
       params: { path: { item_id: id } },
       body: { quantity_status } as FridgeItemUpdateParams,
     })
     return unwrap<FridgeItemResponse>(res)
   },
   remove: async (id: number) => {
-    await api.DELETE('/fridge/{item_id}', {
+    await api.DELETE('/api/fridge/{item_id}', {
       params: { path: { item_id: id } },
     })
   },
@@ -98,22 +98,22 @@ export const fridgeApi = {
 
 export const condimentsApi = {
   list: async () => {
-    const res = await api.GET('/condiments/')
+    const res = await api.GET('/api/condiments/')
     return unwrap<CondimentResponse[]>(res)
   },
   create: async (body: CondimentCreateParams) => {
-    const res = await api.POST('/condiments/', { body })
+    const res = await api.POST('/api/condiments/', { body })
     return unwrap<CondimentResponse>(res)
   },
   update: async (id: number, quantity_status: QuantityStatus) => {
-    const res = await api.PATCH('/condiments/{item_id}', {
+    const res = await api.PATCH('/api/condiments/{item_id}', {
       params: { path: { item_id: id } },
       body: { quantity_status } as CondimentUpdateParams,
     })
     return unwrap<CondimentResponse>(res)
   },
   remove: async (id: number) => {
-    await api.DELETE('/condiments/{item_id}', {
+    await api.DELETE('/api/condiments/{item_id}', {
       params: { path: { item_id: id } },
     })
   },
@@ -121,21 +121,21 @@ export const condimentsApi = {
 
 export const shoppingApi = {
   list: async () => {
-    const res = await api.GET('/shopping/')
+    const res = await api.GET('/api/shopping/')
     return unwrap<ShoppingItemResponse[]>(res)
   },
   create: async (body: ShoppingItemCreateParams) => {
-    const res = await api.POST('/shopping/', { body })
+    const res = await api.POST('/api/shopping/', { body })
     return unwrap<ShoppingItemResponse>(res)
   },
   check: async (id: number) => {
-    const res = await api.PATCH('/shopping/{item_id}/check', {
+    const res = await api.PATCH('/api/shopping/{item_id}/check', {
       params: { path: { item_id: id } },
     })
     return unwrap<ShoppingItemResponse>(res)
   },
   remove: async (id: number) => {
-    await api.DELETE('/shopping/{item_id}', {
+    await api.DELETE('/api/shopping/{item_id}', {
       params: { path: { item_id: id } },
     })
   },
@@ -143,23 +143,23 @@ export const shoppingApi = {
 
 export const favoritesApi = {
   list: async (): Promise<number[]> => {
-    const res = await fetch(`${BASE_URL}/favorites/`)
+    const res = await fetch(`${BASE_URL}/api/favorites/`)
     if (!res.ok) throw new Error('お気に入りの取得に失敗しました')
     return res.json() as Promise<number[]>
   },
   add: async (recipeId: number): Promise<void> => {
-    const res = await fetch(`${BASE_URL}/favorites/${recipeId}`, { method: 'POST' })
+    const res = await fetch(`${BASE_URL}/api/favorites/${recipeId}`, { method: 'POST' })
     if (!res.ok) throw new Error('お気に入りの追加に失敗しました')
   },
   remove: async (recipeId: number): Promise<void> => {
-    const res = await fetch(`${BASE_URL}/favorites/${recipeId}`, { method: 'DELETE' })
+    const res = await fetch(`${BASE_URL}/api/favorites/${recipeId}`, { method: 'DELETE' })
     if (!res.ok) throw new Error('お気に入りの解除に失敗しました')
   },
 }
 
 export const suggestApi = {
   suggest: async (body: SuggestParams): Promise<SuggestResponse> => {
-    const res = await fetch(`${BASE_URL}/recipe/suggest`, {
+    const res = await fetch(`${BASE_URL}/api/recipe/suggest`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(body),
@@ -171,7 +171,7 @@ export const suggestApi = {
     return res.json() as Promise<SuggestResponse>
   },
   addShopping: async (body: AddShoppingParams): Promise<AddShoppingResponse> => {
-    const res = await fetch(`${BASE_URL}/recipe/suggest/add-shopping`, {
+    const res = await fetch(`${BASE_URL}/api/recipe/suggest/add-shopping`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(body),
