@@ -191,12 +191,16 @@ export function RecipePage() {
                     className="h-16 w-16 shrink-0 rounded-md object-cover"
                   />
                 )}
-                <div className="min-w-0 flex-1 space-y-1">
+                <div className="min-w-0 flex-1 space-y-2">
                   <p className="font-medium leading-tight">{recipe.name}</p>
                   {recipe.ingredient_names.length > 0 && (
-                    <p className="text-xs text-muted-foreground line-clamp-2">
-                      {recipe.ingredient_names.join('、')}
-                    </p>
+                    <div className="flex flex-wrap gap-1">
+                      {recipe.ingredient_names.map((name) => (
+                        <Badge key={name} variant="secondary" className="text-xs">
+                          {name}
+                        </Badge>
+                      ))}
+                    </div>
                   )}
                 </div>
               </button>
