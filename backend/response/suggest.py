@@ -15,6 +15,7 @@ class SuggestedMaterialResponse(BaseModel):
 class SuggestedRecipeResponse(BaseModel):
     type: str
     name: str
+    recipe_id: int | None = None
     menu_num: str | None = None
     image_url: str | None = None
     category: str = ""

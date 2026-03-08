@@ -6,6 +6,7 @@ from fastapi.responses import JSONResponse
 from sqlalchemy.exc import IntegrityError
 
 from routers.condiment import router as condiment_router
+from routers.favorite import router as favorite_router
 from routers.fridge import router as fridge_router
 from routers.ingredient_master import router as ingredient_master_router
 from routers.recipe import router as recipe_router
@@ -47,6 +48,7 @@ app.include_router(user_router, prefix="/api")
 app.include_router(ingredient_master_router, prefix="/api")
 app.include_router(fridge_router, prefix="/api")
 app.include_router(condiment_router, prefix="/api")
+app.include_router(favorite_router, prefix="/api")
 app.include_router(recipe_router, prefix="/api")
 app.include_router(suggest_router, prefix="/api")
 app.include_router(shopping_router, prefix="/api")

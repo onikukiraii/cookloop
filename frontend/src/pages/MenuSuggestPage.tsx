@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useMemo, useState } from 'react'
 import { useSessionState } from '@/hooks/use-session-state'
-import { ChefHat, ChevronDown, ChevronUp, CookingPot, RefreshCw, ShoppingCart, Sparkles, UtensilsCrossed } from 'lucide-react'
+import { ChefHat, ChevronDown, ChevronUp, CookingPot, Heart, RefreshCw, ShoppingCart, Sparkles, UtensilsCrossed } from 'lucide-react'
 import { toast } from 'sonner'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
@@ -10,7 +10,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { EmptyState } from '@/components/EmptyState'
 import { ProgressBar } from '@/components/ProgressBar'
 import { CookCompleteDialog } from '@/components/CookCompleteDialog'
-import { fridgeApi, suggestApi } from '@/api/fetcher'
+import { favoritesApi, fridgeApi, suggestApi } from '@/api/fetcher'
 import type { FridgeItemResponse, SuggestedRecipe } from '@/api/constants'
 
 const CATEGORY_ORDER = ['主菜', '副菜', '汁物', '主食', 'デザート', 'その他'] as const
@@ -36,6 +36,28 @@ export function MenuSuggestPage() {
   const [suggesting, setSuggesting] = useState(false)
   const [expandedIndex, setExpandedIndex] = useState<number | null>(null)
   const [addingShoppingFor, setAddingShoppingFor] = useState<number | null>(null)
+  const [favoriteIds, setFavoriteIds] = useState<Set<number>>(new Set())
+
+  const toggleFavorite = async (recipeId: number) => {
+    const isFav = favoriteIds.has(recipeId)
+    setFavoriteIds((prev) => {
+      const next = new Set(prev)
+      if (isFav) next.delete(recipeId)
+      else next.add(recipeId)
+      return next
+    })
+    try {
+      if (isFav) await favoritesApi.remove(recipeId)
+      else await favoritesApi.add(recipeId)
+    } catch {
+      setFavoriteIds((prev) => {
+        const next = new Set(prev)
+        if (isFav) next.add(recipeId)
+        else next.delete(recipeId)
+        return next
+      })
+    }
+  }
 
   const load = useCallback(async () => {
     try {
@@ -49,6 +71,9 @@ export function MenuSuggestPage() {
   }, [])
 
   useEffect(() => { load() }, [load])
+  useEffect(() => {
+    favoritesApi.list().then((ids) => setFavoriteIds(new Set(ids))).catch(() => {})
+  }, [])
 
   const handleSuggest = async () => {
     setSuggesting(true)
@@ -215,6 +240,8 @@ export function MenuSuggestPage() {
                             addingLoading={addingShoppingFor === index}
                             fridgeItems={fridgeItems}
                             onCookComplete={load}
+                            isFavorite={recipe.recipe_id != null && favoriteIds.has(recipe.recipe_id)}
+                            onToggleFavorite={recipe.recipe_id != null ? () => toggleFavorite(recipe.recipe_id!) : undefined}
                           />
                         )
                       })}
@@ -255,6 +282,8 @@ function RecipeCard({
   addingLoading: boolean
   fridgeItems: FridgeItemResponse[]
   onCookComplete: () => void
+  isFavorite: boolean
+  onToggleFavorite?: () => void
 }) {
   const [cookDialogOpen, setCookDialogOpen] = useState(false)
   const hasDetails = recipe.steps.length > 0 || recipe.materials.length > 0
@@ -266,6 +295,13 @@ function RecipeCard({
           <div className="flex items-center gap-2">
             <span className="text-lg font-bold text-muted-foreground/50">#{index + 1}</span>
             <h3 className="text-lg font-semibold">{recipe.name}</h3>
+            {onToggleFavorite && (
+              <button onClick={onToggleFavorite} className="shrink-0 p-0.5">
+                <Heart
+                  className={`h-5 w-5 transition-colors ${isFavorite ? 'fill-red-500 text-red-500' : 'text-muted-foreground hover:text-red-400'}`}
+                />
+              </button>
+            )}
           </div>
           <Badge variant={recipe.type === 'hotcook' ? 'default' : 'secondary'}>
             {recipe.type === 'hotcook' ? (

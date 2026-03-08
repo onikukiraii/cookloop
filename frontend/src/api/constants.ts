@@ -43,6 +43,7 @@ export type SuggestedMaterial = {
 export type SuggestedRecipe = {
   type: 'hotcook' | 'manual'
   name: string
+  recipe_id: number | null
   menu_num: string | null
   image_url: string | null
   category: string

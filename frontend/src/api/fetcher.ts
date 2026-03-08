@@ -141,6 +141,22 @@ export const shoppingApi = {
   },
 }
 
+export const favoritesApi = {
+  list: async (): Promise<number[]> => {
+    const res = await fetch(`${BASE_URL}/favorites/`)
+    if (!res.ok) throw new Error('お気に入りの取得に失敗しました')
+    return res.json() as Promise<number[]>
+  },
+  add: async (recipeId: number): Promise<void> => {
+    const res = await fetch(`${BASE_URL}/favorites/${recipeId}`, { method: 'POST' })
+    if (!res.ok) throw new Error('お気に入りの追加に失敗しました')
+  },
+  remove: async (recipeId: number): Promise<void> => {
+    const res = await fetch(`${BASE_URL}/favorites/${recipeId}`, { method: 'DELETE' })
+    if (!res.ok) throw new Error('お気に入りの解除に失敗しました')
+  },
+}
+
 export const suggestApi = {
   suggest: async (body: SuggestParams): Promise<SuggestResponse> => {
     const res = await fetch(`${BASE_URL}/recipe/suggest`, {

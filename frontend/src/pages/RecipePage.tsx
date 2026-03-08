@@ -1,10 +1,11 @@
 import { useCallback, useEffect, useState } from 'react'
-import { Search, ExternalLink, ChefHat, ArrowLeft } from 'lucide-react'
+import { Search, ExternalLink, ChefHat, ArrowLeft, Heart } from 'lucide-react'
 import { toast } from 'sonner'
 import { Input } from '@/components/ui/input'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { EmptyState } from '@/components/EmptyState'
+import { favoritesApi } from '@/api/fetcher'
 
 const BASE_URL = import.meta.env.VITE_API_BASE_URL ?? 'http://localhost:8000'
 
@@ -28,8 +29,10 @@ type RecipeDetail = {
   steps: { step_order: number; text: string }[]
 }
 
-async function searchRecipes(q: string): Promise<RecipeListItem[]> {
-  const res = await fetch(`${BASE_URL}/recipes/?q=${encodeURIComponent(q)}`)
+async function searchRecipes(q: string, favoritesOnly = false): Promise<RecipeListItem[]> {
+  const params = new URLSearchParams({ q })
+  if (favoritesOnly) params.set('favorites_only', 'true')
+  const res = await fetch(`${BASE_URL}/recipes/?${params.toString()}`)
   if (!res.ok) throw new Error('検索に失敗しました')
   return res.json()
 }
@@ -47,9 +50,37 @@ export function RecipePage() {
   const [searched, setSearched] = useState(false)
   const [detail, setDetail] = useState<RecipeDetail | null>(null)
   const [detailLoading, setDetailLoading] = useState(false)
+  const [favoriteIds, setFavoriteIds] = useState<Set<number>>(new Set())
+  const [favoritesOnly, setFavoritesOnly] = useState(false)
 
-  const handleSearch = useCallback(async (q: string) => {
-    if (!q.trim()) {
+  useEffect(() => {
+    favoritesApi.list().then((ids) => setFavoriteIds(new Set(ids))).catch(() => {})
+  }, [])
+
+  const toggleFavorite = async (e: React.MouseEvent, recipeId: number) => {
+    e.stopPropagation()
+    const isFav = favoriteIds.has(recipeId)
+    setFavoriteIds((prev) => {
+      const next = new Set(prev)
+      if (isFav) next.delete(recipeId)
+      else next.add(recipeId)
+      return next
+    })
+    try {
+      if (isFav) await favoritesApi.remove(recipeId)
+      else await favoritesApi.add(recipeId)
+    } catch {
+      setFavoriteIds((prev) => {
+        const next = new Set(prev)
+        if (isFav) next.add(recipeId)
+        else next.delete(recipeId)
+        return next
+      })
+    }
+  }
+
+  const handleSearch = useCallback(async (q: string, favOnly: boolean) => {
+    if (!q.trim() && !favOnly) {
       setResults([])
       setSearched(false)
       return
@@ -57,7 +88,7 @@ export function RecipePage() {
     setLoading(true)
     setSearched(true)
     try {
-      const data = await searchRecipes(q)
+      const data = await searchRecipes(q, favOnly)
       setResults(data)
     } catch (e) {
       toast.error(e instanceof Error ? e.message : '検索に失敗しました')
@@ -67,9 +98,9 @@ export function RecipePage() {
   }, [])
 
   useEffect(() => {
-    const timer = setTimeout(() => handleSearch(query), 300)
+    const timer = setTimeout(() => handleSearch(query, favoritesOnly), 300)
     return () => clearTimeout(timer)
-  }, [query, handleSearch])
+  }, [query, favoritesOnly, handleSearch])
 
   const openDetail = async (id: number) => {
     setDetailLoading(true)
@@ -101,7 +132,14 @@ export function RecipePage() {
               />
             )}
             <div className="min-w-0 flex-1">
-              <h1 className="text-2xl font-bold tracking-tight">{detail.name}</h1>
+              <div className="flex items-center gap-2">
+                <h1 className="text-2xl font-bold tracking-tight">{detail.name}</h1>
+                <button onClick={(e) => toggleFavorite(e, detail.id)} className="shrink-0">
+                  <Heart
+                    className={`h-6 w-6 transition-colors ${favoriteIds.has(detail.id) ? 'fill-red-500 text-red-500' : 'text-muted-foreground hover:text-red-400'}`}
+                  />
+                </button>
+              </div>
               {detail.menu_num && (
                 <p className="mt-1 text-sm text-muted-foreground">メニュー番号: {detail.menu_num}</p>
               )}
@@ -158,14 +196,25 @@ export function RecipePage() {
         <p className="mt-1 text-sm text-muted-foreground">料理名や食材名からホットクックレシピを検索</p>
       </div>
 
-      <div className="relative">
-        <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-        <Input
-          placeholder="料理名・食材名で検索..."
-          value={query}
-          onChange={(e) => setQuery(e.target.value)}
-          className="pl-9"
-        />
+      <div className="space-y-2">
+        <div className="relative">
+          <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+          <Input
+            placeholder="料理名・食材名で検索..."
+            value={query}
+            onChange={(e) => setQuery(e.target.value)}
+            className="pl-9"
+          />
+        </div>
+        <Button
+          variant={favoritesOnly ? 'default' : 'outline'}
+          size="sm"
+          onClick={() => setFavoritesOnly((prev) => !prev)}
+          className="gap-1.5"
+        >
+          <Heart className={`h-3.5 w-3.5 ${favoritesOnly ? 'fill-current' : ''}`} />
+          お気に入りのみ
+        </Button>
       </div>
 
       {loading || detailLoading ? (
@@ -192,7 +241,17 @@ export function RecipePage() {
                   />
                 )}
                 <div className="min-w-0 flex-1 space-y-2">
-                  <p className="font-medium leading-tight">{recipe.name}</p>
+                  <div className="flex items-start justify-between gap-1">
+                    <p className="font-medium leading-tight">{recipe.name}</p>
+                    <button
+                      onClick={(e) => toggleFavorite(e, recipe.id)}
+                      className="shrink-0 p-0.5"
+                    >
+                      <Heart
+                        className={`h-4 w-4 transition-colors ${favoriteIds.has(recipe.id) ? 'fill-red-500 text-red-500' : 'text-muted-foreground hover:text-red-400'}`}
+                      />
+                    </button>
+                  </div>
                   {recipe.ingredient_names.length > 0 && (
                     <div className="flex flex-wrap gap-1">
                       {recipe.ingredient_names.map((name) => (

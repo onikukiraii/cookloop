@@ -20,3 +20,4 @@ class HotcookRecipe(Base):
     ingredients = relationship("HotcookRecipeIngredient", back_populates="recipe", cascade="all, delete-orphan")
     steps = relationship("HotcookRecipeStep", back_populates="recipe", cascade="all, delete-orphan")
     materials = relationship("HotcookRecipeMaterial", back_populates="recipe", cascade="all, delete-orphan")
+    favorite = relationship("FavoriteRecipe", back_populates="recipe", uselist=False, cascade="all, delete-orphan")

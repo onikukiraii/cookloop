@@ -4,7 +4,7 @@
  */
 
 export interface paths {
-    "/users/": {
+    "/api/users/": {
         parameters: {
             query?: never;
             header?: never;
@@ -12,17 +12,17 @@ export interface paths {
             cookie?: never;
         };
         /** Get Users */
-        get: operations["get_users_users__get"];
+        get: operations["get_users_api_users__get"];
         put?: never;
         /** Create User */
-        post: operations["create_user_users__post"];
+        post: operations["create_user_api_users__post"];
         delete?: never;
         options?: never;
         head?: never;
         patch?: never;
         trace?: never;
     };
-    "/ingredients/search": {
+    "/api/ingredients/search": {
         parameters: {
             query?: never;
             header?: never;
@@ -30,7 +30,7 @@ export interface paths {
             cookie?: never;
         };
         /** Search Ingredients */
-        get: operations["search_ingredients_ingredients_search_get"];
+        get: operations["search_ingredients_api_ingredients_search_get"];
         put?: never;
         post?: never;
         delete?: never;
@@ -39,7 +39,7 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/ingredients/": {
+    "/api/ingredients/": {
         parameters: {
             query?: never;
             header?: never;
@@ -47,17 +47,17 @@ export interface paths {
             cookie?: never;
         };
         /** Get Ingredients */
-        get: operations["get_ingredients_ingredients__get"];
+        get: operations["get_ingredients_api_ingredients__get"];
         put?: never;
         /** Create Ingredient */
-        post: operations["create_ingredient_ingredients__post"];
+        post: operations["create_ingredient_api_ingredients__post"];
         delete?: never;
         options?: never;
         head?: never;
         patch?: never;
         trace?: never;
     };
-    "/ingredients/{item_id}": {
+    "/api/ingredients/{item_id}": {
         parameters: {
             query?: never;
             header?: never;
@@ -71,10 +71,10 @@ export interface paths {
         options?: never;
         head?: never;
         /** Update Ingredient */
-        patch: operations["update_ingredient_ingredients__item_id__patch"];
+        patch: operations["update_ingredient_api_ingredients__item_id__patch"];
         trace?: never;
     };
-    "/fridge/": {
+    "/api/fridge/": {
         parameters: {
             query?: never;
             header?: never;
@@ -82,17 +82,17 @@ export interface paths {
             cookie?: never;
         };
         /** Get Fridge Items */
-        get: operations["get_fridge_items_fridge__get"];
+        get: operations["get_fridge_items_api_fridge__get"];
         put?: never;
         /** Create Fridge Item */
-        post: operations["create_fridge_item_fridge__post"];
+        post: operations["create_fridge_item_api_fridge__post"];
         delete?: never;
         options?: never;
         head?: never;
         patch?: never;
         trace?: never;
     };
-    "/fridge/{item_id}": {
+    "/api/fridge/{item_id}": {
         parameters: {
             query?: never;
             header?: never;
@@ -103,14 +103,14 @@ export interface paths {
         put?: never;
         post?: never;
         /** Delete Fridge Item */
-        delete: operations["delete_fridge_item_fridge__item_id__delete"];
+        delete: operations["delete_fridge_item_api_fridge__item_id__delete"];
         options?: never;
         head?: never;
         /** Update Fridge Item */
-        patch: operations["update_fridge_item_fridge__item_id__patch"];
+        patch: operations["update_fridge_item_api_fridge__item_id__patch"];
         trace?: never;
     };
-    "/condiments/": {
+    "/api/condiments/": {
         parameters: {
             query?: never;
             header?: never;
@@ -118,17 +118,17 @@ export interface paths {
             cookie?: never;
         };
         /** Get Condiments */
-        get: operations["get_condiments_condiments__get"];
+        get: operations["get_condiments_api_condiments__get"];
         put?: never;
         /** Create Condiment */
-        post: operations["create_condiment_condiments__post"];
+        post: operations["create_condiment_api_condiments__post"];
         delete?: never;
         options?: never;
         head?: never;
         patch?: never;
         trace?: never;
     };
-    "/condiments/{item_id}": {
+    "/api/condiments/{item_id}": {
         parameters: {
             query?: never;
             header?: never;
@@ -139,14 +139,117 @@ export interface paths {
         put?: never;
         post?: never;
         /** Delete Condiment */
-        delete: operations["delete_condiment_condiments__item_id__delete"];
+        delete: operations["delete_condiment_api_condiments__item_id__delete"];
         options?: never;
         head?: never;
         /** Update Condiment */
-        patch: operations["update_condiment_condiments__item_id__patch"];
+        patch: operations["update_condiment_api_condiments__item_id__patch"];
         trace?: never;
     };
-    "/shopping/": {
+    "/api/favorites/": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** List Favorites */
+        get: operations["list_favorites_api_favorites__get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/favorites/{recipe_id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Add Favorite */
+        post: operations["add_favorite_api_favorites__recipe_id__post"];
+        /** Remove Favorite */
+        delete: operations["remove_favorite_api_favorites__recipe_id__delete"];
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/recipes/": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Search Recipes */
+        get: operations["search_recipes_api_recipes__get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/recipes/{recipe_id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Get Recipe */
+        get: operations["get_recipe_api_recipes__recipe_id__get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/recipe/suggest": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Suggest Menu */
+        post: operations["suggest_menu_api_recipe_suggest_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/recipe/suggest/add-shopping": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Add Shopping From Suggest */
+        post: operations["add_shopping_from_suggest_api_recipe_suggest_add_shopping_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/shopping/": {
         parameters: {
             query?: never;
             header?: never;
@@ -154,17 +257,17 @@ export interface paths {
             cookie?: never;
         };
         /** Get Shopping Items */
-        get: operations["get_shopping_items_shopping__get"];
+        get: operations["get_shopping_items_api_shopping__get"];
         put?: never;
         /** Create Shopping Item */
-        post: operations["create_shopping_item_shopping__post"];
+        post: operations["create_shopping_item_api_shopping__post"];
         delete?: never;
         options?: never;
         head?: never;
         patch?: never;
         trace?: never;
     };
-    "/shopping/{item_id}/check": {
+    "/api/shopping/{item_id}/check": {
         parameters: {
             query?: never;
             header?: never;
@@ -178,10 +281,10 @@ export interface paths {
         options?: never;
         head?: never;
         /** Check Shopping Item */
-        patch: operations["check_shopping_item_shopping__item_id__check_patch"];
+        patch: operations["check_shopping_item_api_shopping__item_id__check_patch"];
         trace?: never;
     };
-    "/shopping/{item_id}": {
+    "/api/shopping/{item_id}": {
         parameters: {
             query?: never;
             header?: never;
@@ -192,7 +295,7 @@ export interface paths {
         put?: never;
         post?: never;
         /** Delete Shopping Item */
-        delete: operations["delete_shopping_item_shopping__item_id__delete"];
+        delete: operations["delete_shopping_item_api_shopping__item_id__delete"];
         options?: never;
         head?: never;
         patch?: never;
@@ -202,6 +305,11 @@ export interface paths {
 export type webhooks = Record<string, never>;
 export interface components {
     schemas: {
+        /** AddShoppingParams */
+        AddShoppingParams: {
+            /** Ingredient Names */
+            ingredient_names: string[];
+        };
         /** CondimentCreateParams */
         CondimentCreateParams: {
             /** Name */
@@ -325,6 +433,65 @@ export interface components {
          * @enum {string}
          */
         QuantityStatus: "full" | "half" | "little";
+        /** RecipeDetailResponse */
+        RecipeDetailResponse: {
+            /** Id */
+            id: number;
+            /** Code */
+            code: string;
+            /** Name */
+            name: string;
+            /** Menu Num */
+            menu_num: string | null;
+            /** Image Url */
+            image_url: string | null;
+            /** Source Url */
+            source_url: string;
+            /** Ingredients */
+            ingredients: components["schemas"]["RecipeIngredientResponse"][];
+            /** Materials */
+            materials: components["schemas"]["RecipeMaterialResponse"][];
+            /** Steps */
+            steps: components["schemas"]["RecipeStepResponse"][];
+        };
+        /** RecipeIngredientResponse */
+        RecipeIngredientResponse: {
+            /** Id */
+            id: number;
+            /** Name */
+            name: string;
+        };
+        /** RecipeListResponse */
+        RecipeListResponse: {
+            /** Id */
+            id: number;
+            /** Code */
+            code: string;
+            /** Name */
+            name: string;
+            /** Menu Num */
+            menu_num: string | null;
+            /** Image Url */
+            image_url: string | null;
+            /** Ingredient Names */
+            ingredient_names: string[];
+        };
+        /** RecipeMaterialResponse */
+        RecipeMaterialResponse: {
+            /** Name */
+            name: string;
+            /** Quantity */
+            quantity: string | null;
+            /** Group Name */
+            group_name: string | null;
+        };
+        /** RecipeStepResponse */
+        RecipeStepResponse: {
+            /** Step Order */
+            step_order: number;
+            /** Text */
+            text: string;
+        };
         /** ShoppingItemCreateParams */
         ShoppingItemCreateParams: {
             /** Ingredient Master Id */
@@ -357,6 +524,86 @@ export interface components {
          * @enum {string}
          */
         ShoppingSource: "manual" | "recipe" | "staple_auto";
+        /** SuggestParams */
+        SuggestParams: {
+            /**
+             * Mode
+             * @default omakase
+             */
+            mode: string;
+            /**
+             * Ingredient Master Ids
+             * @default []
+             */
+            ingredient_master_ids: number[];
+        };
+        /** SuggestResponse */
+        SuggestResponse: {
+            /** Suggestions */
+            suggestions: components["schemas"]["SuggestedRecipeResponse"][];
+        };
+        /** SuggestedMaterialResponse */
+        SuggestedMaterialResponse: {
+            /** Name */
+            name: string;
+            /** Quantity */
+            quantity?: string | null;
+            /** Group Name */
+            group_name?: string | null;
+        };
+        /** SuggestedRecipeResponse */
+        SuggestedRecipeResponse: {
+            /** Type */
+            type: string;
+            /** Name */
+            name: string;
+            /** Recipe Id */
+            recipe_id?: number | null;
+            /** Menu Num */
+            menu_num?: string | null;
+            /** Image Url */
+            image_url?: string | null;
+            /**
+             * Category
+             * @default
+             */
+            category: string;
+            /** Used Ingredients */
+            used_ingredients: string[];
+            /**
+             * Missing Ingredients
+             * @default []
+             */
+            missing_ingredients: string[];
+            /**
+             * Note
+             * @default
+             */
+            note: string;
+            /**
+             * Steps
+             * @default []
+             */
+            steps: components["schemas"]["SuggestedStepResponse"][];
+            /**
+             * Materials
+             * @default []
+             */
+            materials: components["schemas"]["SuggestedMaterialResponse"][];
+            /** Manual Mode */
+            manual_mode?: string | null;
+            /** Manual Stir */
+            manual_stir?: string | null;
+            /** Manual Time Min */
+            manual_time_min?: number | null;
+        };
+        /** SuggestedStepResponse */
+        SuggestedStepResponse: {
+            /** Step Order */
+            step_order: number;
+            /** Text */
+            text: string;
+        };
         /** UserCreateParams */
         UserCreateParams: {
             /** Name */
@@ -402,7 +649,7 @@ export interface components {
 }
 export type $defs = Record<string, never>;
 export interface operations {
-    get_users_users__get: {
+    get_users_api_users__get: {
         parameters: {
             query?: never;
             header?: never;
@@ -422,7 +669,7 @@ export interface operations {
             };
         };
     };
-    create_user_users__post: {
+    create_user_api_users__post: {
         parameters: {
             query?: never;
             header?: never;
@@ -455,7 +702,7 @@ export interface operations {
             };
         };
     };
-    search_ingredients_ingredients_search_get: {
+    search_ingredients_api_ingredients_search_get: {
         parameters: {
             query: {
                 q: string;
@@ -488,7 +735,7 @@ export interface operations {
             };
         };
     };
-    get_ingredients_ingredients__get: {
+    get_ingredients_api_ingredients__get: {
         parameters: {
             query?: never;
             header?: never;
@@ -508,7 +755,7 @@ export interface operations {
             };
         };
     };
-    create_ingredient_ingredients__post: {
+    create_ingredient_api_ingredients__post: {
         parameters: {
             query?: never;
             header?: never;
@@ -541,7 +788,7 @@ export interface operations {
             };
         };
     };
-    update_ingredient_ingredients__item_id__patch: {
+    update_ingredient_api_ingredients__item_id__patch: {
         parameters: {
             query?: never;
             header?: never;
@@ -576,9 +823,12 @@ export interface operations {
             };
         };
     };
-    get_fridge_items_fridge__get: {
+    get_fridge_items_api_fridge__get: {
         parameters: {
-            query?: never;
+            query?: {
+                /** @description 食材名で検索 */
+                q?: string;
+            };
             header?: never;
             path?: never;
             cookie?: never;
@@ -594,9 +844,18 @@ export interface operations {
                     "application/json": components["schemas"]["FridgeItemResponse"][];
                 };
             };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
         };
     };
-    create_fridge_item_fridge__post: {
+    create_fridge_item_api_fridge__post: {
         parameters: {
             query?: never;
             header?: never;
@@ -629,7 +888,7 @@ export interface operations {
             };
         };
     };
-    delete_fridge_item_fridge__item_id__delete: {
+    delete_fridge_item_api_fridge__item_id__delete: {
         parameters: {
             query?: never;
             header?: never;
@@ -658,7 +917,7 @@ export interface operations {
             };
         };
     };
-    update_fridge_item_fridge__item_id__patch: {
+    update_fridge_item_api_fridge__item_id__patch: {
         parameters: {
             query?: never;
             header?: never;
@@ -693,7 +952,7 @@ export interface operations {
             };
         };
     };
-    get_condiments_condiments__get: {
+    get_condiments_api_condiments__get: {
         parameters: {
             query?: never;
             header?: never;
@@ -713,7 +972,7 @@ export interface operations {
             };
         };
     };
-    create_condiment_condiments__post: {
+    create_condiment_api_condiments__post: {
         parameters: {
             query?: never;
             header?: never;
@@ -746,7 +1005,7 @@ export interface operations {
             };
         };
     };
-    delete_condiment_condiments__item_id__delete: {
+    delete_condiment_api_condiments__item_id__delete: {
         parameters: {
             query?: never;
             header?: never;
@@ -775,7 +1034,7 @@ export interface operations {
             };
         };
     };
-    update_condiment_condiments__item_id__patch: {
+    update_condiment_api_condiments__item_id__patch: {
         parameters: {
             query?: never;
             header?: never;
@@ -810,7 +1069,226 @@ export interface operations {
             };
         };
     };
-    get_shopping_items_shopping__get: {
+    list_favorites_api_favorites__get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": number[];
+                };
+            };
+        };
+    };
+    add_favorite_api_favorites__recipe_id__post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                recipe_id: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        [key: string]: boolean;
+                    };
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    remove_favorite_api_favorites__recipe_id__delete: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                recipe_id: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        [key: string]: boolean;
+                    };
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    search_recipes_api_recipes__get: {
+        parameters: {
+            query?: {
+                /** @description 料理名または食材名で検索 */
+                q?: string;
+                /** @description お気に入りのみ表示 */
+                favorites_only?: boolean;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["RecipeListResponse"][];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    get_recipe_api_recipes__recipe_id__get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                recipe_id: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["RecipeDetailResponse"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    suggest_menu_api_recipe_suggest_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["SuggestParams"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["SuggestResponse"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    add_shopping_from_suggest_api_recipe_suggest_add_shopping_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["AddShoppingParams"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        [key: string]: number;
+                    };
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    get_shopping_items_api_shopping__get: {
         parameters: {
             query?: never;
             header?: never;
@@ -830,7 +1308,7 @@ export interface operations {
             };
         };
     };
-    create_shopping_item_shopping__post: {
+    create_shopping_item_api_shopping__post: {
         parameters: {
             query?: never;
             header?: never;
@@ -863,7 +1341,7 @@ export interface operations {
             };
         };
     };
-    check_shopping_item_shopping__item_id__check_patch: {
+    check_shopping_item_api_shopping__item_id__check_patch: {
         parameters: {
             query?: never;
             header?: never;
@@ -894,7 +1372,7 @@ export interface operations {
             };
         };
     };
-    delete_shopping_item_shopping__item_id__delete: {
+    delete_shopping_item_api_shopping__item_id__delete: {
         parameters: {
             query?: never;
             header?: never;

@@ -175,6 +175,8 @@ JSONのみで返してください。
         category = ai_category
         missing: list[str] = []
 
+        recipe_id: int | None = None
+
         if recipe_type == "hotcook" and menu_num:
             db_recipe = (
                 db.query(HotcookRecipe)
@@ -187,6 +189,7 @@ JSONのみで返してください。
                 .first()
             )
             if db_recipe:
+                recipe_id = int(db_recipe.id)
                 image_url = str(db_recipe.image_url) if db_recipe.image_url else None
                 db_steps = sorted(db_recipe.steps, key=lambda s: s.step_order)
                 steps = [SuggestedStepResponse(step_order=int(s.step_order), text=str(s.text)) for s in db_steps]
@@ -235,6 +238,7 @@ JSONのみで返してください。
             SuggestedRecipeResponse(
                 type=recipe_type,
                 name=recipe_name,
+                recipe_id=recipe_id,
                 menu_num=menu_num,
                 image_url=image_url,
                 category=category,

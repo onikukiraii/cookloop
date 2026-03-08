@@ -5,6 +5,7 @@ from sqlalchemy import and_, or_
 from sqlalchemy.orm import Session, joinedload
 
 from db.session import get_db
+from entity.favorite_recipe import FavoriteRecipe
 from entity.hotcook_recipe import HotcookRecipe
 from entity.hotcook_recipe_ingredient import HotcookRecipeIngredient
 from entity.ingredient_master import IngredientMaster
@@ -30,11 +31,57 @@ def _source_url(code: str) -> str:
 @router.get("/", response_model=list[RecipeListResponse])
 def search_recipes(
     q: str = Query("", description="料理名または食材名で検索"),
+    favorites_only: bool = Query(False, description="お気に入りのみ表示"),
     db: Session = Depends(get_db),
 ) -> list[RecipeListResponse]:
+    if favorites_only:
+        return _search_favorites(q.strip(), db)
     if q.strip():
         return _search_via_opensearch(q.strip(), db)
     return _search_via_db(q, db)
+
+
+def _search_favorites(q: str, db: Session) -> list[RecipeListResponse]:
+    fav_ids = [r[0] for r in db.query(FavoriteRecipe.recipe_id).all()]
+    if not fav_ids:
+        return []
+
+    query = (
+        db.query(HotcookRecipe)
+        .options(
+            joinedload(HotcookRecipe.ingredients).joinedload(HotcookRecipeIngredient.ingredient_master),
+        )
+        .filter(HotcookRecipe.id.in_(fav_ids))
+    )
+
+    if q:
+        keywords = q.split()
+        conditions = []
+        for kw in keywords:
+            pattern = f"%{kw}%"
+            master_ids = [
+                mid for (mid,) in db.query(IngredientMaster.id).filter(IngredientMaster.name.like(pattern)).all()
+            ]
+            conditions.append(
+                or_(
+                    HotcookRecipe.name.like(pattern),
+                    HotcookRecipe.ingredients.any(HotcookRecipeIngredient.ingredient_master_id.in_(master_ids)),
+                )
+            )
+        query = query.filter(and_(*conditions))
+
+    recipes = query.order_by(HotcookRecipe.name).limit(50).all()
+    return [
+        RecipeListResponse(
+            id=r.id,  # type: ignore[arg-type]
+            code=r.code,  # type: ignore[arg-type]
+            name=r.name,  # type: ignore[arg-type]
+            menu_num=r.menu_num,  # type: ignore[arg-type]
+            image_url=r.image_url,  # type: ignore[arg-type]
+            ingredient_names=[ri.ingredient_master.name for ri in r.ingredients if ri.ingredient_master],
+        )
+        for r in recipes
+    ]
 
 
 def _resolve_ingredient_expansions(q: str) -> list[str]:
