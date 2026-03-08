@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useMemo, useState } from 'react'
 import { useSessionState } from '@/hooks/use-session-state'
-import { ChefHat, ChevronDown, ChevronUp, RefreshCw, ShoppingCart, Sparkles, UtensilsCrossed } from 'lucide-react'
+import { ChefHat, ChevronDown, ChevronUp, CookingPot, RefreshCw, ShoppingCart, Sparkles, UtensilsCrossed } from 'lucide-react'
 import { toast } from 'sonner'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
@@ -9,6 +9,7 @@ import { Skeleton } from '@/components/ui/skeleton'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { EmptyState } from '@/components/EmptyState'
 import { ProgressBar } from '@/components/ProgressBar'
+import { CookCompleteDialog } from '@/components/CookCompleteDialog'
 import { fridgeApi, suggestApi } from '@/api/fetcher'
 import type { FridgeItemResponse, SuggestedRecipe } from '@/api/constants'
 
@@ -212,6 +213,8 @@ export function MenuSuggestPage() {
                             onToggle={() => setExpandedIndex(expandedIndex === index ? null : index)}
                             onAddShopping={(names) => handleAddShopping(index, names)}
                             addingLoading={addingShoppingFor === index}
+                            fridgeItems={fridgeItems}
+                            onCookComplete={load}
                           />
                         )
                       })}
@@ -241,6 +244,8 @@ function RecipeCard({
   onToggle,
   onAddShopping,
   addingLoading,
+  fridgeItems,
+  onCookComplete,
 }: {
   recipe: SuggestedRecipe
   index: number
@@ -248,7 +253,10 @@ function RecipeCard({
   onToggle: () => void
   onAddShopping: (names: string[]) => void
   addingLoading: boolean
+  fridgeItems: FridgeItemResponse[]
+  onCookComplete: () => void
 }) {
+  const [cookDialogOpen, setCookDialogOpen] = useState(false)
   const hasDetails = recipe.steps.length > 0 || recipe.materials.length > 0
 
   return (
@@ -334,6 +342,24 @@ function RecipeCard({
             </div>
           </div>
         )}
+
+          <Button
+            variant="outline"
+            size="sm"
+            className="gap-1"
+            onClick={() => setCookDialogOpen(true)}
+          >
+            <CookingPot className="h-4 w-4" />
+            作った！
+          </Button>
+
+          <CookCompleteDialog
+            open={cookDialogOpen}
+            onOpenChange={setCookDialogOpen}
+            recipe={recipe}
+            fridgeItems={fridgeItems}
+            onComplete={onCookComplete}
+          />
       </div>
 
       {hasDetails && (
