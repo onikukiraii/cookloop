@@ -51,6 +51,9 @@ export type SuggestedRecipe = {
   note: string
   steps: SuggestedStep[]
   materials: SuggestedMaterial[]
+  manual_mode: string | null
+  manual_stir: string | null
+  manual_time_min: number | null
 }
 
 export type SuggestResponse = {

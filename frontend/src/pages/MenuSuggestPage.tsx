@@ -272,6 +272,27 @@ function RecipeCard({
           <p className="mb-2 text-sm font-medium text-primary">メニュー番号: No.{recipe.menu_num}</p>
         )}
 
+        {recipe.type === 'manual' && recipe.manual_mode && (
+          <div className="mb-3 rounded-md bg-blue-50 p-3 dark:bg-blue-950/20">
+            <span className="text-xs font-semibold text-blue-700 dark:text-blue-400">手動調理設定</span>
+            <div className="mt-1.5 flex flex-wrap gap-2">
+              <Badge variant="outline" className="border-blue-300 text-blue-700 dark:border-blue-600 dark:text-blue-400">
+                {recipe.manual_mode}
+              </Badge>
+              {recipe.manual_stir && (
+                <Badge variant="outline" className="border-blue-300 text-blue-700 dark:border-blue-600 dark:text-blue-400">
+                  {recipe.manual_stir}
+                </Badge>
+              )}
+              {recipe.manual_time_min != null && (
+                <Badge variant="outline" className="border-blue-300 text-blue-700 dark:border-blue-600 dark:text-blue-400">
+                  {recipe.manual_time_min}分
+                </Badge>
+              )}
+            </div>
+          </div>
+        )}
+
         {recipe.image_url && (
           <img src={recipe.image_url} alt={recipe.name} className="mb-3 h-40 w-full rounded-md object-cover" />
         )}

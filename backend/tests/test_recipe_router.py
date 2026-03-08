@@ -46,8 +46,12 @@ def _create_recipe(
 
 
 class TestSearchRecipes:
+    """DBフォールバック検索のテスト。OpenSearchをモックで無効化して確認する。"""
+
+    @patch("routers.recipe.create_recipe_search_client", side_effect=Exception("unavailable"))
     def test_search_by_name(
         self,
+        _mock_os: MagicMock,
         client: TestClient,
         db_session: Session,
         create_ingredient_master: Callable[..., IngredientMaster],
@@ -63,8 +67,10 @@ class TestSearchRecipes:
         assert data[0]["name"] == "肉じゃが"
         assert "じゃがいも" in data[0]["ingredient_names"]
 
+    @patch("routers.recipe.create_recipe_search_client", side_effect=Exception("unavailable"))
     def test_search_by_ingredient(
         self,
+        _mock_os: MagicMock,
         client: TestClient,
         db_session: Session,
         create_ingredient_master: Callable[..., IngredientMaster],
@@ -80,8 +86,10 @@ class TestSearchRecipes:
         names = [r["name"] for r in data]
         assert "トマトスープ" in names
 
+    @patch("routers.recipe.create_recipe_search_client", side_effect=Exception("unavailable"))
     def test_search_multiple_keywords_and(
         self,
+        _mock_os: MagicMock,
         client: TestClient,
         db_session: Session,
         create_ingredient_master: Callable[..., IngredientMaster],

@@ -17,6 +17,22 @@ from response.suggest import SuggestedMaterialResponse, SuggestedRecipeResponse,
 
 router = APIRouter(prefix="/recipe", tags=["suggest"])
 
+MANUAL_COOKING_REFERENCE = """【手動調理リファレンス】
+手動調理は以下のカテゴリから適切なものを選び、まぜかた・設定時間を指定してください。
+※設定時間は沸とう後の加熱時間です（煮詰める・好みの加熱設定を除く）
+
+1. 炒める（まぜる）- 火の通りやすい食材: 1-3分, 野菜+肉: 4-6分
+2. 煮物を作る（まぜる/まぜない）- 火の通りやすい: 3-5分, 煮物: 10-20分, カレー等: 20-30分, じっくり: 30-60分
+3. スープを作る（まぜる/まぜない）- あたため: 1-2分, みそ汁: 5-15分, スープ: 10-15分
+4. 無水でゆでる（まぜない）- 葉菜: 1-2分, 果菜: 3-5分, 根菜: 15-20分
+5. 蒸す（まぜない、蒸しトレイ+水200ml）- 火の通りやすい野菜: 2-3分, 根菜/肉/魚: 10-15分
+6. めんをゆでる（まぜる、水1L）- パッケージ記載のゆで時間
+7. 発酵・低温調理をする（まぜる/まぜない、温度35-90℃）
+8. ケーキを焼く（まぜない）
+9. 煮詰める（まぜない、設定時間=調理時間）
+10. 好みの加熱設定（火力:強/中/弱、まぜかた:4段階）
+※柔らかい食材（豆腐・魚）や煮崩れしやすい食材は「まぜない」を選択"""
+
 
 def get_gemini_client() -> GeminiClient:
     return create_gemini_client()
@@ -102,6 +118,9 @@ def suggest_menu(
 - ホットクックで作れる場合はメニュー番号を添える
 - ホットクックの候補にない場合は手動調理で提案してよい
 - 食材が足りない場合は省略・代替を提示してよい
+- 手動調理の場合は下記リファレンスを参考にmanual_mode, manual_stir, manual_time_minを必ず指定する
+
+{MANUAL_COOKING_REFERENCE}
 
 JSONのみで返してください。
 [
@@ -117,6 +136,9 @@ JSONのみで返してください。
     "type": "manual",
     "name": "料理名",
     "menu_num": null,
+    "manual_mode": "煮物を作る",
+    "manual_stir": "まぜない",
+    "manual_time_min": 15,
     "category": "副菜",
     "used_ingredients": ["食材1"],
     "note": "補足",
@@ -205,6 +227,10 @@ JSONのみで返してください。
                 if isinstance(m, dict)
             ]
 
+        manual_mode = item.get("manual_mode") if recipe_type == "manual" else None
+        manual_stir = item.get("manual_stir") if recipe_type == "manual" else None
+        manual_time_min = item.get("manual_time_min") if recipe_type == "manual" else None
+
         suggestions.append(
             SuggestedRecipeResponse(
                 type=recipe_type,
@@ -217,6 +243,9 @@ JSONのみで返してください。
                 note=note,
                 steps=steps,
                 materials=materials,
+                manual_mode=manual_mode,
+                manual_stir=manual_stir,
+                manual_time_min=manual_time_min,
             )
         )
 

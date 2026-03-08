@@ -23,6 +23,9 @@ class SuggestedRecipeResponse(BaseModel):
     note: str = ""
     steps: list[SuggestedStepResponse] = []
     materials: list[SuggestedMaterialResponse] = []
+    manual_mode: str | None = None
+    manual_stir: str | None = None
+    manual_time_min: int | None = None
 
 
 class SuggestResponse(BaseModel):

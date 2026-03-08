@@ -39,7 +39,8 @@ class GeminiClient:
             )
         except APIError as e:
             self._handle_api_error(e)
-        return json.loads(response.text)  # type: ignore[arg-type]
+        result: list | dict = json.loads(response.text)  # type: ignore[arg-type]
+        return result
 
 
 def create_gemini_client(model: str = "gemini-2.5-flash") -> GeminiClient:

@@ -17,6 +17,9 @@ MOCK_GEMINI_RESPONSE = [
         "type": "manual",
         "name": "野菜炒め",
         "menu_num": None,
+        "manual_mode": "炒める",
+        "manual_stir": "まぜる",
+        "manual_time_min": 5,
         "category": "主菜",
         "used_ingredients": ["豚バラ肉", "玉ねぎ", "にんじん"],
         "note": "",
@@ -115,6 +118,10 @@ def test_suggest_omakase(
     assert hotcook_item["materials"][0]["quantity"] == "200g"
     # DBの食材マスタから不足食材を算出（ニラは冷蔵庫にない）
     assert hotcook_item["missing_ingredients"] == ["ニラ"]
+    # hotcookレシピには手動調理フィールドがない
+    assert hotcook_item["manual_mode"] is None
+    assert hotcook_item["manual_stir"] is None
+    assert hotcook_item["manual_time_min"] is None
 
     manual_item = data["suggestions"][1]
     assert manual_item["type"] == "manual"
@@ -126,6 +133,10 @@ def test_suggest_omakase(
     assert manual_item["materials"][2]["name"] == "にんじん"
     # manualの場合はGeminiのused_ingredientsから算出（全部冷蔵庫にある）
     assert manual_item["missing_ingredients"] == []
+    # 手動調理フィールドが正しい値であること
+    assert manual_item["manual_mode"] == "炒める"
+    assert manual_item["manual_stir"] == "まぜる"
+    assert manual_item["manual_time_min"] == 5
 
 
 @patch("routers.suggest.create_gemini_client")
