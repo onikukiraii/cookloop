@@ -258,6 +258,8 @@ export interface components {
             expiry_date: string;
             /** Quantity Status */
             quantity_status: string;
+            /** Is Staple */
+            is_staple: boolean;
             /**
              * Registered At
              * Format: date-time

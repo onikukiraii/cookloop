@@ -11,6 +11,7 @@ class FridgeItemResponse(BaseModel):
     ingredient_name: str
     expiry_date: datetime.date
     quantity_status: str
+    is_staple: bool
     registered_at: datetime.datetime
     updated_at: datetime.datetime
 
@@ -24,6 +25,7 @@ def to_fridge_response(item: FridgeItem) -> FridgeItemResponse:
         ingredient_name=item.ingredient_master.name,
         expiry_date=item.expiry_date,  # type: ignore[arg-type]
         quantity_status=item.quantity_status,  # type: ignore[arg-type]
+        is_staple=item.ingredient_master.is_staple,
         registered_at=item.registered_at,  # type: ignore[arg-type]
         updated_at=item.updated_at,  # type: ignore[arg-type]
     )

@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useState } from 'react'
-import { Plus, Refrigerator, Trash2 } from 'lucide-react'
+import { CircleCheck, Plus, Refrigerator, Star } from 'lucide-react'
 import { toast } from 'sonner'
 import { Button } from '@/components/ui/button'
 import { Label } from '@/components/ui/label'
@@ -143,6 +143,9 @@ export function FridgePage() {
                 <div className="min-w-0 flex-1 space-y-1">
                   <div className="flex items-center gap-2">
                     <span className="truncate font-medium">{item.ingredient_name}</span>
+                    {item.is_staple && (
+                      <Star className="h-4 w-4 shrink-0 fill-staple-flag text-staple-flag" title="定番食材" />
+                    )}
                   </div>
                   <div className="flex items-center gap-2">
                     <FreshnessBadge expiryDate={item.expiry_date} />
@@ -157,8 +160,8 @@ export function FridgePage() {
                   >
                     <QuantityBadge status={item.quantity_status as QuantityStatus} />
                   </button>
-                  <Button variant="ghost" size="icon" className="h-8 w-8 text-muted-foreground hover:text-destructive" onClick={() => setDeleteTarget(item)}>
-                    <Trash2 className="h-4 w-4" />
+                  <Button variant="ghost" size="icon" className="h-8 w-8 text-muted-foreground hover:text-green-600" onClick={() => setDeleteTarget(item)} title="使い切り">
+                    <CircleCheck className="h-4 w-4" />
                   </Button>
                 </div>
               </div>
@@ -209,8 +212,8 @@ export function FridgePage() {
       <ConfirmDialog
         open={!!deleteTarget}
         onOpenChange={(open) => { if (!open) setDeleteTarget(null) }}
-        title="食材の削除"
-        description={`「${deleteTarget?.ingredient_name}」を冷蔵庫から削除しますか？`}
+        title="使い切り"
+        description={`「${deleteTarget?.ingredient_name}」を使い切りにしますか？${deleteTarget?.is_staple ? '（定番食材のため買い物リストに自動追加されます）' : ''}`}
         onConfirm={handleDelete}
         loading={deleting}
       />

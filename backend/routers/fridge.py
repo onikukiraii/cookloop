@@ -83,9 +83,27 @@ def update_fridge_item(
 
 @router.delete("/{item_id}", status_code=204)
 def delete_fridge_item(item_id: int, db: Session = Depends(get_db)) -> None:
-    item = db.query(FridgeItem).filter(FridgeItem.id == item_id).first()
+    item = (
+        db.query(FridgeItem).options(joinedload(FridgeItem.ingredient_master)).filter(FridgeItem.id == item_id).first()
+    )
     if not item:
         raise HTTPException(status_code=404, detail="冷蔵庫アイテムが見つかりません。")
+
+    if item.ingredient_master.is_staple:
+        existing = (
+            db.query(ShoppingItem)
+            .filter(
+                ShoppingItem.ingredient_master_id == item.ingredient_master_id,
+                ShoppingItem.is_checked == False,  # noqa: E712
+            )
+            .first()
+        )
+        if not existing:
+            shopping_item = ShoppingItem(
+                ingredient_master_id=item.ingredient_master_id,
+                source="staple_auto",
+            )
+            db.add(shopping_item)
 
     db.delete(item)
     db.commit()

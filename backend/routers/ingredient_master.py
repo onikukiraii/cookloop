@@ -21,7 +21,7 @@ def search_ingredients(q: str = Query(..., min_length=1)) -> list[dict[str, Any]
 
 @router.get("/", response_model=list[IngredientMasterResponse])
 def get_ingredients(db: Session = Depends(get_db)) -> list[IngredientMaster]:
-    return db.query(IngredientMaster).all()
+    return db.query(IngredientMaster).order_by(IngredientMaster.is_staple.desc(), IngredientMaster.name).all()
 
 
 @router.post("/", response_model=IngredientMasterResponse)

@@ -19,6 +19,14 @@ class TestGetIngredients:
         data = resp.json()
         assert len(data) == 2
 
+    def test_staple_first(self, client: TestClient, create_ingredient_master: Callable[..., IngredientMaster]) -> None:
+        create_ingredient_master(name="トマト", is_staple=False)
+        create_ingredient_master(name="塩", is_staple=True)
+        create_ingredient_master(name="きゅうり", is_staple=False)
+        resp = client.get("/ingredients/")
+        names = [d["name"] for d in resp.json()]
+        assert names[0] == "塩"
+
 
 class TestCreateIngredient:
     def test_create(self, client: TestClient) -> None:
