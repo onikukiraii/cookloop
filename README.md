@@ -6,6 +6,15 @@
 
 冷蔵庫の在庫と賞味期限を管理して、ホットクック公式レシピのデータをもとに Gemini が「今夜これ作れるよ」とメニュー番号付きで提案してくれる。無くなりそうな食材は自動で買い物リストに入る。このループが CookLoop。
 
+## スクリーンショット
+
+<p align="center">
+  <img src="docs/images/fridge.png" alt="冷蔵庫管理" width="200">
+  <img src="docs/images/menu-suggesting.png" alt="献立提案" width="200">
+  <img src="docs/images/menu-suggested.png" alt="献立提案結果" width="200">
+  <img src="docs/images/shopping.png" alt="買い物リスト" width="200">
+</p>
+
 ## 主な機能
 
 - **冷蔵庫管理** — 食材の在庫・残量・賞味期限を一覧管理。期限が近い食材は色で警告
