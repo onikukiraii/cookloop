@@ -40,7 +40,7 @@ export function MenuSuggestPage() {
   const [mode, setMode] = useState<'omakase' | 'ingredient'>('omakase')
   const [selectedIds, setSelectedIds] = useState<number[]>([])
   const [suggestions, setSuggestions] = useSessionState<SuggestedRecipe[] | null>('menu-suggestions', null)
-  const [jobId, setJobId] = useState<number | null>(null)
+  const [jobId, setJobId] = useSessionState<number | null>('suggest-job-id', null)
   const [expandedIndex, setExpandedIndex] = useState<number | null>(null)
   const [addingShoppingFor, setAddingShoppingFor] = useState<number | null>(null)
 
