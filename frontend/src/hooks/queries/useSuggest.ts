@@ -26,6 +26,6 @@ export function useLatestSuggestJob() {
   return useQuery({
     queryKey: suggestKeys.latest,
     queryFn: () => suggestApi.getLatestJob(),
-    staleTime: Infinity,
+    staleTime: 0,
   })
 }
