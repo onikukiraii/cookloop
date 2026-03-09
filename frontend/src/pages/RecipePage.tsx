@@ -32,13 +32,13 @@ type RecipeDetail = {
 async function searchRecipes(q: string, favoritesOnly = false): Promise<RecipeListItem[]> {
   const params = new URLSearchParams({ q })
   if (favoritesOnly) params.set('favorites_only', 'true')
-  const res = await fetch(`${BASE_URL}/recipes/?${params.toString()}`)
+  const res = await fetch(`${BASE_URL}/api/recipes/?${params.toString()}`)
   if (!res.ok) throw new Error('検索に失敗しました')
   return res.json()
 }
 
 async function getRecipeDetail(id: number): Promise<RecipeDetail> {
-  const res = await fetch(`${BASE_URL}/recipes/${id}`)
+  const res = await fetch(`${BASE_URL}/api/recipes/${id}`)
   if (!res.ok) throw new Error('レシピの取得に失敗しました')
   return res.json()
 }

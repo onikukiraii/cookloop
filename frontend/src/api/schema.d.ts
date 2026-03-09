@@ -4,7 +4,7 @@
  */
 
 export interface paths {
-    "/users/": {
+    "/api/users/": {
         parameters: {
             query?: never;
             header?: never;
@@ -22,7 +22,7 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/ingredients/search": {
+    "/api/ingredients/search": {
         parameters: {
             query?: never;
             header?: never;
@@ -39,7 +39,7 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/ingredients/": {
+    "/api/ingredients/": {
         parameters: {
             query?: never;
             header?: never;
@@ -57,7 +57,7 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/ingredients/{item_id}": {
+    "/api/ingredients/{item_id}": {
         parameters: {
             query?: never;
             header?: never;
@@ -74,7 +74,7 @@ export interface paths {
         patch: operations["update_ingredient_api_ingredients__item_id__patch"];
         trace?: never;
     };
-    "/fridge/": {
+    "/api/fridge/": {
         parameters: {
             query?: never;
             header?: never;
@@ -92,7 +92,7 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/fridge/{item_id}": {
+    "/api/fridge/{item_id}": {
         parameters: {
             query?: never;
             header?: never;
@@ -110,7 +110,7 @@ export interface paths {
         patch: operations["update_fridge_item_api_fridge__item_id__patch"];
         trace?: never;
     };
-    "/condiments/": {
+    "/api/condiments/": {
         parameters: {
             query?: never;
             header?: never;
@@ -128,7 +128,7 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/condiments/{item_id}": {
+    "/api/condiments/{item_id}": {
         parameters: {
             query?: never;
             header?: never;
@@ -146,7 +146,7 @@ export interface paths {
         patch: operations["update_condiment_api_condiments__item_id__patch"];
         trace?: never;
     };
-    "/favorites/": {
+    "/api/favorites/": {
         parameters: {
             query?: never;
             header?: never;
@@ -163,7 +163,7 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/favorites/{recipe_id}": {
+    "/api/favorites/{recipe_id}": {
         parameters: {
             query?: never;
             header?: never;
@@ -181,7 +181,7 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/recipes/": {
+    "/api/recipes/": {
         parameters: {
             query?: never;
             header?: never;
@@ -198,7 +198,7 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/recipes/{recipe_id}": {
+    "/api/recipes/{recipe_id}": {
         parameters: {
             query?: never;
             header?: never;
@@ -215,7 +215,7 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/recipe/suggest": {
+    "/api/recipe/suggest": {
         parameters: {
             query?: never;
             header?: never;
@@ -232,7 +232,7 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/recipe/suggest/add-shopping": {
+    "/api/recipe/suggest/add-shopping": {
         parameters: {
             query?: never;
             header?: never;
@@ -249,7 +249,7 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/shopping/": {
+    "/api/shopping/": {
         parameters: {
             query?: never;
             header?: never;
@@ -267,7 +267,7 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/shopping/{item_id}/check": {
+    "/api/shopping/{item_id}/check": {
         parameters: {
             query?: never;
             header?: never;
@@ -284,7 +284,24 @@ export interface paths {
         patch: operations["check_shopping_item_api_shopping__item_id__check_patch"];
         trace?: never;
     };
-    "/shopping/{item_id}": {
+    "/api/shopping/by-name": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Create Shopping Item By Name */
+        post: operations["create_shopping_item_by_name_api_shopping_by_name_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/shopping/{item_id}": {
         parameters: {
             query?: never;
             header?: never;
@@ -332,6 +349,8 @@ export interface components {
             quantity_status: string;
             /** Is Staple */
             is_staple: boolean;
+            /** Ingredient Master Id */
+            ingredient_master_id: number | null;
             /**
              * Updated At
              * Format: date-time
@@ -399,6 +418,11 @@ export interface components {
              * @default false
              */
             is_staple: boolean;
+            /**
+             * Category
+             * @default ingredient
+             */
+            category: string;
         };
         /** IngredientMasterResponse */
         IngredientMasterResponse: {
@@ -410,6 +434,8 @@ export interface components {
             default_expiry_days: number;
             /** Is Staple */
             is_staple: boolean;
+            /** Category */
+            category: string;
             /**
              * Created At
              * Format: date-time
@@ -491,6 +517,13 @@ export interface components {
             step_order: number;
             /** Text */
             text: string;
+        };
+        /** ShoppingItemCreateByNameParams */
+        ShoppingItemCreateByNameParams: {
+            /** Name */
+            name: string;
+            /** @default manual */
+            source: components["schemas"]["ShoppingSource"];
         };
         /** ShoppingItemCreateParams */
         ShoppingItemCreateParams: {
@@ -1351,6 +1384,39 @@ export interface operations {
             cookie?: never;
         };
         requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ShoppingItemResponse"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    create_shopping_item_by_name_api_shopping_by_name_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["ShoppingItemCreateByNameParams"];
+            };
+        };
         responses: {
             /** @description Successful Response */
             200: {
