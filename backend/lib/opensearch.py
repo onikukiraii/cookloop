@@ -6,30 +6,70 @@ from opensearchpy import OpenSearch
 INGREDIENTS_INDEX = "ingredients"
 RECIPES_INDEX = "recipes"
 
+_COMMON_ANALYSIS: dict[str, Any] = {
+    "tokenizer": {
+        "ngram_tokenizer": {
+            "type": "ngram",
+            "min_gram": 1,
+            "max_gram": 3,
+            "token_chars": [],
+        }
+    },
+    "filter": {
+        "kana_to_hiragana": {
+            "type": "icu_transform",
+            "id": "Katakana-Hiragana",
+        }
+    },
+    "analyzer": {
+        "kuromoji_normalize": {
+            "type": "custom",
+            "tokenizer": "kuromoji_tokenizer",
+            "filter": [
+                "kuromoji_baseform",
+                "kuromoji_part_of_speech",
+                "cjk_width",
+                "kana_to_hiragana",
+                "ja_stop",
+                "lowercase",
+            ],
+        },
+        "ngram_kana": {
+            "type": "custom",
+            "tokenizer": "ngram_tokenizer",
+            "filter": ["kana_to_hiragana", "cjk_width", "lowercase"],
+        },
+        "kana_search": {
+            "type": "custom",
+            "tokenizer": "keyword",
+            "filter": ["kana_to_hiragana", "cjk_width", "lowercase"],
+        },
+    },
+}
+
+_TEXT_FIELD: dict[str, Any] = {
+    "type": "text",
+    "analyzer": "kuromoji_normalize",
+    "fields": {
+        "partial": {
+            "type": "text",
+            "analyzer": "ngram_kana",
+            "search_analyzer": "kana_search",
+        }
+    },
+}
+
 INGREDIENTS_MAPPING: dict[str, Any] = {
     "settings": {
-        "analysis": {
-            "analyzer": {
-                "kuromoji_normalize": {
-                    "type": "custom",
-                    "tokenizer": "kuromoji_tokenizer",
-                    "filter": [
-                        "kuromoji_baseform",
-                        "kuromoji_part_of_speech",
-                        "cjk_width",
-                        "ja_stop",
-                        "lowercase",
-                    ],
-                }
-            }
-        }
+        "index": {"max_ngram_diff": 2},
+        "analysis": _COMMON_ANALYSIS,
     },
     "mappings": {
         "properties": {
             "id": {"type": "integer"},
-            "name": {"type": "text", "analyzer": "kuromoji_normalize"},
-            "aliases": {"type": "text", "analyzer": "kuromoji_normalize"},
-            "yomi": {"type": "text", "analyzer": "kuromoji_normalize"},
+            "name": _TEXT_FIELD,
+            "aliases": _TEXT_FIELD,
+            "yomi": _TEXT_FIELD,
         }
     },
 }
@@ -37,29 +77,16 @@ INGREDIENTS_MAPPING: dict[str, Any] = {
 
 RECIPES_MAPPING: dict[str, Any] = {
     "settings": {
-        "analysis": {
-            "analyzer": {
-                "kuromoji_normalize": {
-                    "type": "custom",
-                    "tokenizer": "kuromoji_tokenizer",
-                    "filter": [
-                        "kuromoji_baseform",
-                        "kuromoji_part_of_speech",
-                        "cjk_width",
-                        "ja_stop",
-                        "lowercase",
-                    ],
-                }
-            }
-        }
+        "index": {"max_ngram_diff": 2},
+        "analysis": _COMMON_ANALYSIS,
     },
     "mappings": {
         "properties": {
             "id": {"type": "integer"},
-            "name": {"type": "text", "analyzer": "kuromoji_normalize"},
-            "name_yomi": {"type": "text", "analyzer": "kuromoji_normalize"},
-            "name_aliases": {"type": "text", "analyzer": "kuromoji_normalize"},
-            "ingredient_names": {"type": "text", "analyzer": "kuromoji_normalize"},
+            "name": _TEXT_FIELD,
+            "name_yomi": _TEXT_FIELD,
+            "name_aliases": _TEXT_FIELD,
+            "ingredient_names": _TEXT_FIELD,
             "category": {"type": "keyword"},
             "code": {"type": "keyword"},
             "menu_num": {"type": "keyword"},
@@ -73,7 +100,9 @@ class IngredientSearchClient:
     def __init__(self, client: OpenSearch) -> None:
         self._client = client
 
-    def ensure_index(self) -> None:
+    def ensure_index(self, *, recreate: bool = False) -> None:
+        if recreate and self._client.indices.exists(index=INGREDIENTS_INDEX):
+            self._client.indices.delete(index=INGREDIENTS_INDEX)
         if not self._client.indices.exists(index=INGREDIENTS_INDEX):
             self._client.indices.create(index=INGREDIENTS_INDEX, body=INGREDIENTS_MAPPING)
 
@@ -96,8 +125,12 @@ class IngredientSearchClient:
                                 "fields": ["name", "aliases", "yomi"],
                             }
                         },
-                        {"wildcard": {"name": {"value": f"*{query}*"}}},
-                        {"wildcard": {"yomi": {"value": f"*{query}*"}}},
+                        {
+                            "multi_match": {
+                                "query": query,
+                                "fields": ["name.partial", "aliases.partial", "yomi.partial"],
+                            }
+                        },
                     ],
                     "minimum_should_match": 1,
                 }
@@ -115,7 +148,9 @@ class RecipeSearchClient:
     def __init__(self, client: OpenSearch) -> None:
         self._client = client
 
-    def ensure_index(self) -> None:
+    def ensure_index(self, *, recreate: bool = False) -> None:
+        if recreate and self._client.indices.exists(index=RECIPES_INDEX):
+            self._client.indices.delete(index=RECIPES_INDEX)
         if not self._client.indices.exists(index=RECIPES_INDEX):
             self._client.indices.create(index=RECIPES_INDEX, body=RECIPES_MAPPING)
 
@@ -163,8 +198,17 @@ class RecipeSearchClient:
                     "fields": ["name^2", "name_yomi^2", "name_aliases^2", "ingredient_names"],
                 }
             },
-            {"wildcard": {"name": {"value": f"*{query}*"}}},
-            {"wildcard": {"name_yomi": {"value": f"*{query}*"}}},
+            {
+                "multi_match": {
+                    "query": query,
+                    "fields": [
+                        "name.partial^2",
+                        "name_yomi.partial^2",
+                        "name_aliases.partial^2",
+                        "ingredient_names.partial",
+                    ],
+                }
+            },
         ]
         if ingredient_expansions:
             for ing_name in ingredient_expansions:

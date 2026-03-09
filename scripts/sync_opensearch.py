@@ -54,6 +54,8 @@ def load_recipe_yomi_map() -> dict[str, dict]:
 def main() -> None:
     import os
 
+    recreate = "--no-recreate" not in sys.argv
+
     database_url = os.environ.get(
         "DATABASE_URL", "mysql+pymysql://app:password@localhost:3309/cookloop"
     )
@@ -61,7 +63,7 @@ def main() -> None:
     session_factory = sessionmaker(bind=engine)
 
     search_client = create_ingredient_search_client()
-    search_client.ensure_index()
+    search_client.ensure_index(recreate=recreate)
 
     aliases_map = load_aliases_map()
 
@@ -83,7 +85,7 @@ def main() -> None:
 
         # レシピ同期
         recipe_client = create_recipe_search_client()
-        recipe_client.ensure_index()
+        recipe_client.ensure_index(recreate=recreate)
 
         recipe_yomi_map = load_recipe_yomi_map()
 
