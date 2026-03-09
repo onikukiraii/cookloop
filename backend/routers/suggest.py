@@ -328,7 +328,7 @@ def suggest_menu(
 def get_latest_suggest_job(
     db: Session = Depends(get_db),
 ) -> SuggestJobStatusResponse | None:
-    job = db.query(SuggestJob).order_by(SuggestJob.id.desc()).first()
+    job = db.query(SuggestJob).filter(SuggestJob.status != "failed").order_by(SuggestJob.id.desc()).first()
     if not job:
         return None
 
