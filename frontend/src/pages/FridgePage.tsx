@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useState } from 'react'
+import { useState } from 'react'
 import { CircleCheck, Plus, Refrigerator, Search, Star } from 'lucide-react'
 import { toast } from 'sonner'
 import { Button } from '@/components/ui/button'
@@ -12,9 +12,11 @@ import { FreshnessBadge } from '@/components/FreshnessBadge'
 import { getFreshness } from '@/lib/freshness'
 import { ConfirmDialog } from '@/components/ConfirmDialog'
 import { IngredientSelect } from '@/components/IngredientSelect'
-import { fridgeApi, ingredientsApi } from '@/api/fetcher'
-import { QUANTITY_STATUS_LABEL, type FridgeItemResponse, type IngredientMasterResponse, type QuantityStatus } from '@/api/constants'
+import { QUANTITY_STATUS_LABEL, type FridgeItemResponse, type QuantityStatus } from '@/api/constants'
 import { cn } from '@/lib/utils'
+import { useFridgeItems, useCreateFridgeItem, useUpdateFridgeItem, useDeleteFridgeItem, useToggleStaple } from '@/hooks/queries/useFridge'
+import { useIngredients } from '@/hooks/queries/useIngredients'
+import { useEffect } from 'react'
 
 const QUANTITY_CYCLE: QuantityStatus[] = ['full', 'half', 'little']
 
@@ -26,47 +28,31 @@ const freshnessBorder: Record<string, string> = {
 }
 
 export function FridgePage() {
-  const [items, setItems] = useState<FridgeItemResponse[]>([])
-  const [ingredients, setIngredients] = useState<IngredientMasterResponse[]>([])
-  const [loading, setLoading] = useState(true)
   const [dialogOpen, setDialogOpen] = useState(false)
   const [ingredientId, setIngredientId] = useState('')
   const [expiryDate, setExpiryDate] = useState('')
   const [quantityStatus, setQuantityStatus] = useState<QuantityStatus>('full')
-  const [submitting, setSubmitting] = useState(false)
   const [searchQuery, setSearchQuery] = useState('')
+  const [debouncedQuery, setDebouncedQuery] = useState('')
   const [deleteTarget, setDeleteTarget] = useState<FridgeItemResponse | null>(null)
-  const [deleting, setDeleting] = useState(false)
-
-  const load = useCallback(async (q?: string) => {
-    try {
-      const [fridgeData, ingredientData] = await Promise.all([
-        fridgeApi.list(q || undefined),
-        ingredientsApi.list(),
-      ])
-      setItems(fridgeData)
-      setIngredients(ingredientData)
-    } catch (e) {
-      toast.error(e instanceof Error ? e.message : '読み込みに失敗しました')
-    } finally {
-      setLoading(false)
-    }
-  }, [])
 
   useEffect(() => {
     const delay = searchQuery ? 300 : 0
-    const timer = setTimeout(() => {
-      setLoading(true)
-      load(searchQuery || undefined)
-    }, delay)
+    const timer = setTimeout(() => setDebouncedQuery(searchQuery), delay)
     return () => clearTimeout(timer)
-  }, [searchQuery, load])
+  }, [searchQuery])
+
+  const { data: items = [], isLoading } = useFridgeItems(debouncedQuery || undefined)
+  const { data: ingredients = [] } = useIngredients()
+  const createMutation = useCreateFridgeItem()
+  const updateMutation = useUpdateFridgeItem()
+  const deleteMutation = useDeleteFridgeItem()
+  const toggleStapleMutation = useToggleStaple()
 
   const handleCreate = async () => {
     if (!ingredientId) return
-    setSubmitting(true)
     try {
-      await fridgeApi.create({
+      await createMutation.mutateAsync({
         ingredient_master_id: Number(ingredientId),
         expiry_date: expiryDate || undefined,
         quantity_status: quantityStatus,
@@ -74,11 +60,8 @@ export function FridgePage() {
       toast.success('食材を追加しました')
       setDialogOpen(false)
       resetForm()
-      await load(searchQuery || undefined)
     } catch (e) {
       toast.error(e instanceof Error ? e.message : '追加に失敗しました')
-    } finally {
-      setSubmitting(false)
     }
   }
 
@@ -86,8 +69,7 @@ export function FridgePage() {
     const currentIndex = QUANTITY_CYCLE.indexOf(item.quantity_status as QuantityStatus)
     const nextStatus = QUANTITY_CYCLE[(currentIndex + 1) % QUANTITY_CYCLE.length]
     try {
-      await fridgeApi.update(item.id, nextStatus)
-      await load(searchQuery || undefined)
+      await updateMutation.mutateAsync({ id: item.id, quantityStatus: nextStatus })
     } catch (e) {
       toast.error(e instanceof Error ? e.message : '更新に失敗しました')
     }
@@ -95,9 +77,8 @@ export function FridgePage() {
 
   const handleToggleStaple = async (item: FridgeItemResponse) => {
     try {
-      await ingredientsApi.update(item.ingredient_master_id, { is_staple: !item.is_staple })
+      await toggleStapleMutation.mutateAsync({ id: item.ingredient_master_id, isStaple: !item.is_staple })
       toast.success(`「${item.ingredient_name}」を${item.is_staple ? '定番から解除' : '定番に設定'}しました`)
-      await load(searchQuery || undefined)
     } catch (e) {
       toast.error(e instanceof Error ? e.message : '更新に失敗しました')
     }
@@ -105,16 +86,12 @@ export function FridgePage() {
 
   const handleDelete = async () => {
     if (!deleteTarget) return
-    setDeleting(true)
     try {
-      await fridgeApi.remove(deleteTarget.id)
+      await deleteMutation.mutateAsync(deleteTarget.id)
       toast.success(`「${deleteTarget.ingredient_name}」を削除しました`)
       setDeleteTarget(null)
-      await load(searchQuery || undefined)
     } catch (e) {
       toast.error(e instanceof Error ? e.message : '削除に失敗しました')
-    } finally {
-      setDeleting(false)
     }
   }
 
@@ -152,7 +129,7 @@ export function FridgePage() {
         />
       </div>
 
-      {loading ? (
+      {isLoading ? (
         <div className="py-16 text-center text-muted-foreground">読み込み中...</div>
       ) : items.length === 0 ? (
         <EmptyState icon={<Refrigerator className="h-10 w-10" />} message="食材が登録されていません" />
@@ -231,11 +208,11 @@ export function FridgePage() {
             </div>
           </div>
           <DialogFooter>
-            <Button variant="outline" onClick={() => setDialogOpen(false)} disabled={submitting}>
+            <Button variant="outline" onClick={() => setDialogOpen(false)} disabled={createMutation.isPending}>
               キャンセル
             </Button>
-            <Button onClick={handleCreate} disabled={!ingredientId || submitting}>
-              {submitting ? '追加中...' : '追加'}
+            <Button onClick={handleCreate} disabled={!ingredientId || createMutation.isPending}>
+              {createMutation.isPending ? '追加中...' : '追加'}
             </Button>
           </DialogFooter>
         </DialogContent>
@@ -247,7 +224,7 @@ export function FridgePage() {
         title="使い切り"
         description={`「${deleteTarget?.ingredient_name}」を使い切りにしますか？${deleteTarget?.is_staple ? '（定番食材のため買い物リストに自動追加されます）' : ''}`}
         onConfirm={handleDelete}
-        loading={deleting}
+        loading={deleteMutation.isPending}
       />
     </div>
   )

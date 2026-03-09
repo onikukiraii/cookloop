@@ -139,6 +139,18 @@ export const shoppingApi = {
       params: { path: { item_id: id } },
     })
   },
+  createByName: async (body: { name: string; source?: string }): Promise<ShoppingItemResponse> => {
+    const res = await fetch(`${BASE_URL}/shopping/by-name`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(body),
+    })
+    if (!res.ok) {
+      const err = await res.json().catch(() => ({}))
+      throw new Error(typeof err.detail === 'string' ? err.detail : 'サーバーエラーが発生しました')
+    }
+    return res.json() as Promise<ShoppingItemResponse>
+  },
 }
 
 export const favoritesApi = {

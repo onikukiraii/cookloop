@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
-import { Search } from 'lucide-react'
+import { Plus, Search } from 'lucide-react'
 import { Input } from '@/components/ui/input'
+import { Button } from '@/components/ui/button'
 import { ingredientsApi } from '@/api/fetcher'
 import type { IngredientMasterResponse } from '@/api/constants'
 
@@ -9,9 +10,10 @@ interface IngredientSelectProps {
   value: string
   onValueChange: (value: string) => void
   placeholder?: string
+  onCreateNew?: (name: string) => void
 }
 
-export function IngredientSelect({ ingredients, value, onValueChange, placeholder = '食材を検索...' }: IngredientSelectProps) {
+export function IngredientSelect({ ingredients, value, onValueChange, placeholder = '食材を検索...', onCreateNew }: IngredientSelectProps) {
   const [query, setQuery] = useState('')
   const [results, setResults] = useState<IngredientMasterResponse[]>([])
   const [open, setOpen] = useState(false)
@@ -73,6 +75,14 @@ export function IngredientSelect({ ingredients, value, onValueChange, placeholde
     setOpen(true)
   }
 
+  const handleCreateNew = () => {
+    if (onCreateNew && query.trim()) {
+      onCreateNew(query.trim())
+      setQuery('')
+      setOpen(false)
+    }
+  }
+
   return (
     <div ref={containerRef} className="relative">
       <div className="relative">
@@ -90,7 +100,20 @@ export function IngredientSelect({ ingredients, value, onValueChange, placeholde
           {searching ? (
             <div className="px-3 py-2 text-sm text-muted-foreground">検索中...</div>
           ) : results.length === 0 ? (
-            <div className="px-3 py-2 text-sm text-muted-foreground">該当する食材がありません</div>
+            <div className="space-y-1">
+              <div className="px-3 py-2 text-sm text-muted-foreground">該当する食材がありません</div>
+              {onCreateNew && query.trim() && (
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  className="w-full justify-start gap-2 px-3"
+                  onClick={handleCreateNew}
+                >
+                  <Plus className="h-4 w-4" />
+                  「{query.trim()}」を新規登録して追加
+                </Button>
+              )}
+            </div>
           ) : (
             results.map((item) => (
               <button

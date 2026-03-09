@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useState } from 'react'
+import { useState } from 'react'
 import { Plus, Leaf, Star, Search } from 'lucide-react'
 import { toast } from 'sonner'
 import { Button } from '@/components/ui/button'
@@ -8,41 +8,28 @@ import { Checkbox } from '@/components/ui/checkbox'
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table'
 import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog'
 import { EmptyState } from '@/components/EmptyState'
-import { ingredientsApi } from '@/api/fetcher'
 import type { IngredientMasterResponse } from '@/api/constants'
+import { useIngredients, useCreateIngredient, useUpdateIngredient } from '@/hooks/queries/useIngredients'
 
 export function IngredientMasterPage() {
-  const [items, setItems] = useState<IngredientMasterResponse[]>([])
-  const [loading, setLoading] = useState(true)
+  const { data: items = [], isLoading } = useIngredients()
+  const createMutation = useCreateIngredient()
+  const updateMutation = useUpdateIngredient()
+
   const [dialogOpen, setDialogOpen] = useState(false)
   const [name, setName] = useState('')
   const [defaultExpiryDays, setDefaultExpiryDays] = useState('7')
   const [isStaple, setIsStaple] = useState(false)
-  const [submitting, setSubmitting] = useState(false)
   const [search, setSearch] = useState('')
 
-  const load = useCallback(async () => {
-    try {
-      const data = await ingredientsApi.list()
-      setItems(data)
-    } catch (e) {
-      toast.error(e instanceof Error ? e.message : '読み込みに失敗しました')
-    } finally {
-      setLoading(false)
-    }
-  }, [])
-
-  useEffect(() => { load() }, [load])
-
-  const filtered = items.filter((item) =>
+  const filtered = items.filter((item: IngredientMasterResponse) =>
     item.name.toLowerCase().includes(search.toLowerCase()),
   )
 
   const handleToggleStaple = async (item: IngredientMasterResponse) => {
     try {
-      await ingredientsApi.update(item.id, { is_staple: !item.is_staple })
+      await updateMutation.mutateAsync({ id: item.id, body: { is_staple: !item.is_staple } })
       toast.success(`「${item.name}」を${item.is_staple ? '定番から解除' : '定番に設定'}しました`)
-      await load()
     } catch (e) {
       toast.error(e instanceof Error ? e.message : '更新に失敗しました')
     }
@@ -50,9 +37,8 @@ export function IngredientMasterPage() {
 
   const handleCreate = async () => {
     if (!name.trim()) return
-    setSubmitting(true)
     try {
-      await ingredientsApi.create({
+      await createMutation.mutateAsync({
         name: name.trim(),
         default_expiry_days: Number(defaultExpiryDays) || 7,
         is_staple: isStaple,
@@ -62,11 +48,8 @@ export function IngredientMasterPage() {
       setName('')
       setDefaultExpiryDays('7')
       setIsStaple(false)
-      await load()
     } catch (e) {
       toast.error(e instanceof Error ? e.message : '登録に失敗しました')
-    } finally {
-      setSubmitting(false)
     }
   }
 
@@ -93,7 +76,7 @@ export function IngredientMasterPage() {
         />
       </div>
 
-      {loading ? (
+      {isLoading ? (
         <div className="py-16 text-center text-muted-foreground">読み込み中...</div>
       ) : filtered.length === 0 ? (
         <EmptyState icon={<Leaf className="h-10 w-10" />} message={search ? '該当する食材がありません' : '食材マスタが登録されていません'} />
@@ -108,7 +91,7 @@ export function IngredientMasterPage() {
               </TableRow>
             </TableHeader>
             <TableBody>
-              {filtered.map((item) => (
+              {filtered.map((item: IngredientMasterResponse) => (
                 <TableRow key={item.id}>
                   <TableCell className="font-medium">{item.name}</TableCell>
                   <TableCell className="text-center">{item.default_expiry_days}</TableCell>
@@ -156,11 +139,11 @@ export function IngredientMasterPage() {
             </div>
           </div>
           <DialogFooter>
-            <Button variant="outline" onClick={() => setDialogOpen(false)} disabled={submitting}>
+            <Button variant="outline" onClick={() => setDialogOpen(false)} disabled={createMutation.isPending}>
               キャンセル
             </Button>
-            <Button onClick={handleCreate} disabled={!name.trim() || submitting}>
-              {submitting ? '登録中...' : '登録'}
+            <Button onClick={handleCreate} disabled={!name.trim() || createMutation.isPending}>
+              {createMutation.isPending ? '登録中...' : '登録'}
             </Button>
           </DialogFooter>
         </DialogContent>

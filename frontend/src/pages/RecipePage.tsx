@@ -5,7 +5,7 @@ import { Input } from '@/components/ui/input'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { EmptyState } from '@/components/EmptyState'
-import { favoritesApi } from '@/api/fetcher'
+import { useFavorites, useAddFavorite, useRemoveFavorite } from '@/hooks/queries/useFavorites'
 
 const BASE_URL = import.meta.env.VITE_API_BASE_URL ?? 'http://localhost:8000'
 
@@ -50,32 +50,20 @@ export function RecipePage() {
   const [searched, setSearched] = useState(false)
   const [detail, setDetail] = useState<RecipeDetail | null>(null)
   const [detailLoading, setDetailLoading] = useState(false)
-  const [favoriteIds, setFavoriteIds] = useState<Set<number>>(new Set())
   const [favoritesOnly, setFavoritesOnly] = useState(false)
 
-  useEffect(() => {
-    favoritesApi.list().then((ids) => setFavoriteIds(new Set(ids))).catch(() => {})
-  }, [])
+  const { data: favoriteIds = new Set<number>() } = useFavorites()
+  const addFavoriteMutation = useAddFavorite()
+  const removeFavoriteMutation = useRemoveFavorite()
 
   const toggleFavorite = async (e: React.MouseEvent, recipeId: number) => {
     e.stopPropagation()
     const isFav = favoriteIds.has(recipeId)
-    setFavoriteIds((prev) => {
-      const next = new Set(prev)
-      if (isFav) next.delete(recipeId)
-      else next.add(recipeId)
-      return next
-    })
     try {
-      if (isFav) await favoritesApi.remove(recipeId)
-      else await favoritesApi.add(recipeId)
+      if (isFav) await removeFavoriteMutation.mutateAsync(recipeId)
+      else await addFavoriteMutation.mutateAsync(recipeId)
     } catch {
-      setFavoriteIds((prev) => {
-        const next = new Set(prev)
-        if (isFav) next.add(recipeId)
-        else next.delete(recipeId)
-        return next
-      })
+      // mutation error handled by react-query
     }
   }
 

@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useState } from 'react'
+import { useState } from 'react'
 import { Plus, CookingPot, Trash2 } from 'lucide-react'
 import { toast } from 'sonner'
 import { Button } from '@/components/ui/button'
@@ -11,40 +11,27 @@ import { Badge } from '@/components/ui/badge'
 import { EmptyState } from '@/components/EmptyState'
 import { QuantityBadge } from '@/components/QuantityBadge'
 import { ConfirmDialog } from '@/components/ConfirmDialog'
-import { condimentsApi } from '@/api/fetcher'
 import { QUANTITY_STATUS_LABEL, type CondimentResponse, type QuantityStatus } from '@/api/constants'
+import { useCondiments, useCreateCondiment, useUpdateCondiment, useDeleteCondiment } from '@/hooks/queries/useCondiments'
 
 const QUANTITY_CYCLE: QuantityStatus[] = ['full', 'half', 'little']
 
 export function CondimentPage() {
-  const [items, setItems] = useState<CondimentResponse[]>([])
-  const [loading, setLoading] = useState(true)
+  const { data: items = [], isLoading } = useCondiments()
+  const createMutation = useCreateCondiment()
+  const updateMutation = useUpdateCondiment()
+  const deleteMutation = useDeleteCondiment()
+
   const [dialogOpen, setDialogOpen] = useState(false)
   const [name, setName] = useState('')
   const [quantityStatus, setQuantityStatus] = useState<QuantityStatus>('full')
   const [isStaple, setIsStaple] = useState(true)
-  const [submitting, setSubmitting] = useState(false)
   const [deleteTarget, setDeleteTarget] = useState<CondimentResponse | null>(null)
-  const [deleting, setDeleting] = useState(false)
-
-  const load = useCallback(async () => {
-    try {
-      const data = await condimentsApi.list()
-      setItems(data)
-    } catch (e) {
-      toast.error(e instanceof Error ? e.message : '読み込みに失敗しました')
-    } finally {
-      setLoading(false)
-    }
-  }, [])
-
-  useEffect(() => { load() }, [load])
 
   const handleCreate = async () => {
     if (!name.trim()) return
-    setSubmitting(true)
     try {
-      await condimentsApi.create({
+      await createMutation.mutateAsync({
         name: name.trim(),
         quantity_status: quantityStatus,
         is_staple: isStaple,
@@ -54,11 +41,8 @@ export function CondimentPage() {
       setName('')
       setQuantityStatus('full')
       setIsStaple(true)
-      await load()
     } catch (e) {
       toast.error(e instanceof Error ? e.message : '登録に失敗しました')
-    } finally {
-      setSubmitting(false)
     }
   }
 
@@ -66,8 +50,7 @@ export function CondimentPage() {
     const currentIndex = QUANTITY_CYCLE.indexOf(item.quantity_status as QuantityStatus)
     const nextStatus = QUANTITY_CYCLE[(currentIndex + 1) % QUANTITY_CYCLE.length]
     try {
-      await condimentsApi.update(item.id, nextStatus)
-      await load()
+      await updateMutation.mutateAsync({ id: item.id, quantityStatus: nextStatus })
     } catch (e) {
       toast.error(e instanceof Error ? e.message : '更新に失敗しました')
     }
@@ -75,16 +58,12 @@ export function CondimentPage() {
 
   const handleDelete = async () => {
     if (!deleteTarget) return
-    setDeleting(true)
     try {
-      await condimentsApi.remove(deleteTarget.id)
+      await deleteMutation.mutateAsync(deleteTarget.id)
       toast.success(`「${deleteTarget.name}」を削除しました`)
       setDeleteTarget(null)
-      await load()
     } catch (e) {
       toast.error(e instanceof Error ? e.message : '削除に失敗しました')
-    } finally {
-      setDeleting(false)
     }
   }
 
@@ -101,7 +80,7 @@ export function CondimentPage() {
         </Button>
       </div>
 
-      {loading ? (
+      {isLoading ? (
         <div className="py-16 text-center text-muted-foreground">読み込み中...</div>
       ) : items.length === 0 ? (
         <EmptyState icon={<CookingPot className="h-10 w-10" />} message="調味料が登録されていません" />
@@ -163,11 +142,11 @@ export function CondimentPage() {
             </div>
           </div>
           <DialogFooter>
-            <Button variant="outline" onClick={() => setDialogOpen(false)} disabled={submitting}>
+            <Button variant="outline" onClick={() => setDialogOpen(false)} disabled={createMutation.isPending}>
               キャンセル
             </Button>
-            <Button onClick={handleCreate} disabled={!name.trim() || submitting}>
-              {submitting ? '登録中...' : '登録'}
+            <Button onClick={handleCreate} disabled={!name.trim() || createMutation.isPending}>
+              {createMutation.isPending ? '登録中...' : '登録'}
             </Button>
           </DialogFooter>
         </DialogContent>
@@ -179,7 +158,7 @@ export function CondimentPage() {
         title="調味料の削除"
         description={`「${deleteTarget?.name}」を削除しますか？`}
         onConfirm={handleDelete}
-        loading={deleting}
+        loading={deleteMutation.isPending}
       />
     </div>
   )

@@ -1,4 +1,5 @@
-import { useCallback, useEffect, useMemo, useState } from 'react'
+import { useMemo, useState } from 'react'
+import { useQueryClient } from '@tanstack/react-query'
 import { useSessionState } from '@/hooks/use-session-state'
 import { ChefHat, ChevronDown, ChevronUp, CookingPot, Heart, RefreshCw, ShoppingCart, Sparkles, UtensilsCrossed } from 'lucide-react'
 import { toast } from 'sonner'
@@ -10,8 +11,10 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { EmptyState } from '@/components/EmptyState'
 import { ProgressBar } from '@/components/ProgressBar'
 import { CookCompleteDialog } from '@/components/CookCompleteDialog'
-import { favoritesApi, fridgeApi, suggestApi } from '@/api/fetcher'
+import { suggestApi } from '@/api/fetcher'
 import type { FridgeItemResponse, SuggestedRecipe } from '@/api/constants'
+import { useFridgeItems } from '@/hooks/queries/useFridge'
+import { useFavorites, useAddFavorite, useRemoveFavorite } from '@/hooks/queries/useFavorites'
 
 const CATEGORY_ORDER = ['主菜', '副菜', '汁物', '主食', 'デザート', 'その他'] as const
 
@@ -28,52 +31,27 @@ function groupByCategory(recipes: SuggestedRecipe[]): { category: string; recipe
 }
 
 export function MenuSuggestPage() {
-  const [fridgeItems, setFridgeItems] = useState<FridgeItemResponse[]>([])
-  const [loading, setLoading] = useState(true)
+  const { data: fridgeItems = [], isLoading } = useFridgeItems()
+  const { data: favoriteIds = new Set<number>() } = useFavorites()
+  const addFavoriteMutation = useAddFavorite()
+  const removeFavoriteMutation = useRemoveFavorite()
+
   const [mode, setMode] = useState<'omakase' | 'ingredient'>('omakase')
   const [selectedIds, setSelectedIds] = useState<number[]>([])
   const [suggestions, setSuggestions] = useSessionState<SuggestedRecipe[] | null>('menu-suggestions', null)
   const [suggesting, setSuggesting] = useState(false)
   const [expandedIndex, setExpandedIndex] = useState<number | null>(null)
   const [addingShoppingFor, setAddingShoppingFor] = useState<number | null>(null)
-  const [favoriteIds, setFavoriteIds] = useState<Set<number>>(new Set())
 
   const toggleFavorite = async (recipeId: number) => {
     const isFav = favoriteIds.has(recipeId)
-    setFavoriteIds((prev) => {
-      const next = new Set(prev)
-      if (isFav) next.delete(recipeId)
-      else next.add(recipeId)
-      return next
-    })
     try {
-      if (isFav) await favoritesApi.remove(recipeId)
-      else await favoritesApi.add(recipeId)
+      if (isFav) await removeFavoriteMutation.mutateAsync(recipeId)
+      else await addFavoriteMutation.mutateAsync(recipeId)
     } catch {
-      setFavoriteIds((prev) => {
-        const next = new Set(prev)
-        if (isFav) next.add(recipeId)
-        else next.delete(recipeId)
-        return next
-      })
+      // handled by react-query
     }
   }
-
-  const load = useCallback(async () => {
-    try {
-      const data = await fridgeApi.list()
-      setFridgeItems(data)
-    } catch (e) {
-      toast.error(e instanceof Error ? e.message : '読み込みに失敗しました')
-    } finally {
-      setLoading(false)
-    }
-  }, [])
-
-  useEffect(() => { load() }, [load])
-  useEffect(() => {
-    favoritesApi.list().then((ids) => setFavoriteIds(new Set(ids))).catch(() => {})
-  }, [])
 
   const handleSuggest = async () => {
     setSuggesting(true)
@@ -121,7 +99,6 @@ export function MenuSuggestPage() {
     [suggestions],
   )
 
-  // Build stable index map for RecipeCard keys
   const recipeIndexMap = useMemo(() => {
     if (!suggestions) return new Map<SuggestedRecipe, number>()
     const map = new Map<SuggestedRecipe, number>()
@@ -136,7 +113,7 @@ export function MenuSuggestPage() {
         <p className="mt-1 text-sm text-muted-foreground">冷蔵庫の食材からAIが献立を提案します</p>
       </div>
 
-      {loading ? (
+      {isLoading ? (
         <div className="py-16 text-center text-muted-foreground">読み込み中...</div>
       ) : fridgeItems.length === 0 ? (
         <EmptyState icon={<ChefHat className="h-10 w-10" />} message="冷蔵庫に食材を登録すると献立を提案できます" />
@@ -239,7 +216,6 @@ export function MenuSuggestPage() {
                             onAddShopping={(names) => handleAddShopping(index, names)}
                             addingLoading={addingShoppingFor === index}
                             fridgeItems={fridgeItems}
-                            onCookComplete={load}
                             isFavorite={recipe.recipe_id != null && favoriteIds.has(recipe.recipe_id)}
                             onToggleFavorite={recipe.recipe_id != null ? () => toggleFavorite(recipe.recipe_id!) : undefined}
                           />
@@ -272,7 +248,6 @@ function RecipeCard({
   onAddShopping,
   addingLoading,
   fridgeItems,
-  onCookComplete,
   isFavorite,
   onToggleFavorite,
 }: {
@@ -283,12 +258,12 @@ function RecipeCard({
   onAddShopping: (names: string[]) => void
   addingLoading: boolean
   fridgeItems: FridgeItemResponse[]
-  onCookComplete: () => void
   isFavorite: boolean
   onToggleFavorite?: () => void
 }) {
   const [cookDialogOpen, setCookDialogOpen] = useState(false)
   const hasDetails = recipe.steps.length > 0 || recipe.materials.length > 0
+  const queryClient = useQueryClient()
 
   return (
     <div className="rounded-lg border bg-card shadow-sm">
@@ -396,7 +371,7 @@ function RecipeCard({
             onOpenChange={setCookDialogOpen}
             recipe={recipe}
             fridgeItems={fridgeItems}
-            onComplete={onCookComplete}
+            onComplete={() => queryClient.invalidateQueries({ queryKey: ['fridge'] })}
           />
       </div>
 
