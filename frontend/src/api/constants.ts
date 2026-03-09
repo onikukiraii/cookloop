@@ -83,4 +83,5 @@ export type SuggestJobStatusResponse = {
   status: 'pending' | 'running' | 'completed' | 'failed'
   suggestions: SuggestedRecipe[] | null
   error: string | null
+  created_at: string | null
 }

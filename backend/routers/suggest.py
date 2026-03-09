@@ -342,6 +342,7 @@ def get_latest_suggest_job(
         status=str(job.status),
         suggestions=suggestions,
         error=str(job.error_message) if job.error_message else None,
+        created_at=job.created_at,  # type: ignore[arg-type]
     )
 
 
@@ -364,6 +365,7 @@ def get_suggest_job_status(
         status=str(job.status),
         suggestions=suggestions,
         error=str(job.error_message) if job.error_message else None,
+        created_at=job.created_at,  # type: ignore[arg-type]
     )
 
 

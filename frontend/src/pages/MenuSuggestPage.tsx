@@ -50,7 +50,12 @@ export function MenuSuggestPage() {
   useEffect(() => {
     if (!latestJob || jobId != null || suggestions != null) return
     if (latestJob.status === 'pending' || latestJob.status === 'running') {
-      setJobId(latestJob.job_id)
+      // 5分以上前のpending/runningジョブはゾンビとして無視
+      const isRecent = latestJob.created_at
+        && (Date.now() - new Date(latestJob.created_at).getTime()) < 5 * 60 * 1000
+      if (isRecent) {
+        setJobId(latestJob.job_id)
+      }
     } else if (latestJob.status === 'completed' && latestJob.suggestions) {
       setSuggestions(latestJob.suggestions)
     }

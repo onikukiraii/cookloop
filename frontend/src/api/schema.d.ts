@@ -470,16 +470,10 @@ export interface components {
             is_staple: boolean;
             /** Category */
             category: string;
-            /**
-             * Created At
-             * Format: date-time
-             */
-            created_at: string;
-            /**
-             * Updated At
-             * Format: date-time
-             */
-            updated_at: string;
+            /** Created At */
+            created_at?: string | null;
+            /** Updated At */
+            updated_at?: string | null;
         };
         /** IngredientMasterUpdateParams */
         IngredientMasterUpdateParams: {
@@ -606,6 +600,8 @@ export interface components {
             suggestions?: components["schemas"]["SuggestedRecipeResponse"][] | null;
             /** Error */
             error?: string | null;
+            /** Created At */
+            created_at?: string | null;
         };
         /** SuggestParams */
         SuggestParams: {
