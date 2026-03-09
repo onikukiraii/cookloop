@@ -26,7 +26,7 @@ from main import app  # noqa: E402
 
 
 @pytest.fixture()
-def db_session() -> Generator[Session]:
+def db_engine() -> Generator[Any]:
     engine = create_engine(
         "sqlite:///:memory:",
         connect_args={"check_same_thread": False},
@@ -40,21 +40,36 @@ def db_session() -> Generator[Session]:
         cursor.close()
 
     Base.metadata.create_all(bind=engine)
-    testing_session_local = sessionmaker(bind=engine, autocommit=False, autoflush=False)
+    yield engine
+    Base.metadata.drop_all(bind=engine)
+
+
+@pytest.fixture()
+def testing_session_local(db_engine: Any) -> sessionmaker[Session]:
+    return sessionmaker(bind=db_engine, autocommit=False, autoflush=False)
+
+
+@pytest.fixture()
+def db_session(testing_session_local: sessionmaker[Session]) -> Generator[Session]:
     session = testing_session_local()
     try:
         yield session
     finally:
         session.close()
-        Base.metadata.drop_all(bind=engine)
 
 
 @pytest.fixture()
-def client(db_session: Session) -> Generator[TestClient]:
+def client(db_session: Session, testing_session_local: sessionmaker[Session]) -> Generator[TestClient]:
+    from routers.suggest import get_session_factory
+
     def _override_get_db() -> Generator[Session]:
         yield db_session
 
+    def _override_session_factory() -> sessionmaker[Session]:
+        return testing_session_local
+
     app.dependency_overrides[get_db] = _override_get_db
+    app.dependency_overrides[get_session_factory] = _override_session_factory
     with TestClient(app) as c:
         yield c
     app.dependency_overrides.clear()

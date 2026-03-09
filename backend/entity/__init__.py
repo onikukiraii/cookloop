@@ -8,6 +8,7 @@ from entity.hotcook_recipe_material import HotcookRecipeMaterial
 from entity.hotcook_recipe_step import HotcookRecipeStep
 from entity.ingredient_master import IngredientMaster
 from entity.shopping_item import ShoppingItem
+from entity.suggest_job import SuggestJob
 from entity.user import User
 
 __all__ = [
@@ -21,5 +22,6 @@ __all__ = [
     "HotcookRecipeStep",
     "IngredientMaster",
     "ShoppingItem",
+    "SuggestJob",
     "User",
 ]

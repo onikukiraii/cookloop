@@ -31,3 +31,14 @@ class SuggestedRecipeResponse(BaseModel):
 
 class SuggestResponse(BaseModel):
     suggestions: list[SuggestedRecipeResponse]
+
+
+class SuggestJobCreateResponse(BaseModel):
+    job_id: int
+
+
+class SuggestJobStatusResponse(BaseModel):
+    job_id: int
+    status: str
+    suggestions: list[SuggestedRecipeResponse] | None = None
+    error: str | None = None

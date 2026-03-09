@@ -101,10 +101,16 @@ def test_suggest_omakase(
     mock_client.generate_json.return_value = MOCK_GEMINI_RESPONSE
     mock_create_gemini.return_value = mock_client
 
+    # Step 1: POST to create job
     res = client.post("/api/recipe/suggest", json={"mode": "omakase"})
+    assert res.status_code == 202
+    job_id = res.json()["job_id"]
+
+    # Step 2: GET job status (BackgroundTasks runs synchronously in TestClient)
+    res = client.get(f"/api/recipe/suggest/jobs/{job_id}")
     assert res.status_code == 200
     data = res.json()
-
+    assert data["status"] == "completed"
     assert len(data["suggestions"]) == 3
 
     hotcook_item = data["suggestions"][0]
@@ -166,7 +172,7 @@ def test_suggest_ingredient_mode(
         "/api/recipe/suggest",
         json={"mode": "ingredient", "ingredient_master_ids": [pork.id]},
     )
-    assert res.status_code == 200
+    assert res.status_code == 202
 
     prompt_call = mock_client.generate_json.call_args[0][0]
     assert "豚バラ肉" in prompt_call
@@ -181,6 +187,11 @@ def test_suggest_empty_fridge(mock_create_gemini: MagicMock, client: Any) -> Non
     assert res.status_code == 400
     assert "冷蔵庫に食材がありません" in res.json()["detail"]
     mock_client.generate_json.assert_not_called()
+
+
+def test_suggest_job_not_found(client: Any) -> None:
+    res = client.get("/api/recipe/suggest/jobs/99999")
+    assert res.status_code == 404
 
 
 def test_add_shopping(
