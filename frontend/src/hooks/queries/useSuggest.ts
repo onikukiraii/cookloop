@@ -12,7 +12,9 @@ export function useSuggestJob(jobId: number | null) {
     queryKey: suggestKeys.job(jobId ?? 0),
     queryFn: () => suggestApi.getJobStatus(jobId!),
     enabled: jobId != null,
+    retry: 3,
     refetchInterval: (query) => {
+      if (query.state.error) return false
       const status = query.state.data?.status
       if (status === 'completed' || status === 'failed') return false
       return 2000

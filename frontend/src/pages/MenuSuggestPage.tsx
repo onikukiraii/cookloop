@@ -61,9 +61,9 @@ export function MenuSuggestPage() {
     }
   }, [latestJob]) // eslint-disable-line react-hooks/exhaustive-deps
 
-  const { data: jobStatus } = useSuggestJob(jobId)
+  const { data: jobStatus, error: jobError } = useSuggestJob(jobId)
 
-  const suggesting = jobId != null && (jobStatus?.status === 'pending' || jobStatus?.status === 'running' || !jobStatus)
+  const suggesting = jobId != null && !jobError && (jobStatus?.status === 'pending' || jobStatus?.status === 'running' || !jobStatus)
 
   const sendNotification = useCallback((title: string, body: string) => {
     if ('Notification' in window && Notification.permission === 'granted') {
@@ -72,6 +72,11 @@ export function MenuSuggestPage() {
   }, [])
 
   useEffect(() => {
+    if (jobError) {
+      toast.error('提案状況の取得に失敗しました。再度お試しください。')
+      setJobId(null)
+      return
+    }
     if (!jobStatus) return
     if (jobStatus.status === 'completed' && jobStatus.suggestions) {
       setSuggestions(jobStatus.suggestions)
@@ -82,7 +87,7 @@ export function MenuSuggestPage() {
       setJobId(null)
       sendNotification('献立提案に失敗しました', jobStatus.error ?? 'エラーが発生しました')
     }
-  }, [jobStatus, setSuggestions, sendNotification])
+  }, [jobStatus, jobError, setSuggestions, sendNotification])
 
   const toggleFavorite = async (recipeId: number) => {
     const isFav = favoriteIds.has(recipeId)
