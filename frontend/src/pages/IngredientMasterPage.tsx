@@ -42,6 +42,7 @@ export function IngredientMasterPage() {
         name: name.trim(),
         default_expiry_days: Number(defaultExpiryDays) || 7,
         is_staple: isStaple,
+        category: 'ingredient',
       })
       toast.success(`「${name.trim()}」を登録しました`)
       setDialogOpen(false)
