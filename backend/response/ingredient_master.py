@@ -9,7 +9,7 @@ class IngredientMasterResponse(BaseModel):
     default_expiry_days: int
     is_staple: bool
     category: str
-    created_at: datetime
-    updated_at: datetime
+    created_at: datetime | None = None
+    updated_at: datetime | None = None
 
     model_config = {"from_attributes": True}
