@@ -13,9 +13,11 @@ class IngredientMaster(Base):
     name = Column(String(100), unique=True, nullable=False)
     default_expiry_days = Column(Integer, nullable=False)
     is_staple = Column(Boolean, nullable=False, default=False)
+    category = Column(String(20), nullable=False, default="ingredient")
     created_at = Column(DateTime, default=lambda: datetime.now(UTC))
     updated_at = Column(DateTime, default=lambda: datetime.now(UTC), onupdate=lambda: datetime.now(UTC))
 
     fridge_items = relationship("FridgeItem", back_populates="ingredient_master")
     shopping_items = relationship("ShoppingItem", back_populates="ingredient_master")
     recipe_ingredients = relationship("HotcookRecipeIngredient", back_populates="ingredient_master")
+    condiment_items = relationship("CondimentItem", back_populates="ingredient_master")

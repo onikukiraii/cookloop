@@ -1,6 +1,15 @@
 from enum import Enum
 
 
+class IngredientCategory(str, Enum):
+    ingredient = "ingredient"
+    condiment = "condiment"
+
+    @property
+    def label(self) -> str:
+        return {"ingredient": "食材", "condiment": "調味料"}[self.value]
+
+
 class QuantityStatus(str, Enum):
     full = "full"
     half = "half"

@@ -30,6 +30,7 @@ def create_ingredient(params: IngredientMasterCreateParams, db: Session = Depend
         name=params.name,
         default_expiry_days=params.default_expiry_days,
         is_staple=params.is_staple,
+        category=params.category,
     )
     db.add(ingredient)
     db.commit()

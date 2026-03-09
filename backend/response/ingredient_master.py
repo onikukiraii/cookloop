@@ -8,6 +8,7 @@ class IngredientMasterResponse(BaseModel):
     name: str
     default_expiry_days: int
     is_staple: bool
+    category: str
     created_at: datetime
     updated_at: datetime
 

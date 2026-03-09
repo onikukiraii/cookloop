@@ -5,6 +5,8 @@ from sqlalchemy.orm import Session
 
 from db.session import get_db
 from entity.condiment_item import CondimentItem
+from entity.ingredient_master import IngredientMaster
+from lib.opensearch import create_ingredient_search_client
 from params.condiment import CondimentCreateParams, CondimentUpdateParams
 from response.condiment import CondimentResponse
 
@@ -26,10 +28,33 @@ def get_condiments(db: Session = Depends(get_db)) -> list[CondimentItem]:
 
 @router.post("/", response_model=CondimentResponse)
 def create_condiment(params: CondimentCreateParams, db: Session = Depends(get_db)) -> CondimentItem:
+    # IngredientMaster を検索または作成
+    master = db.query(IngredientMaster).filter(IngredientMaster.name == params.name).first()
+    if not master:
+        master = IngredientMaster(
+            name=params.name,
+            default_expiry_days=365,
+            is_staple=params.is_staple,
+            category="condiment",
+        )
+        db.add(master)
+        db.flush()
+
+        try:
+            search_client = create_ingredient_search_client()
+            search_client.ensure_index()
+            search_client.upsert(master.id, master.name)  # type: ignore[arg-type]
+        except Exception:
+            pass
+    else:
+        # 既存マスタを condiment カテゴリに更新
+        master.category = "condiment"  # type: ignore[assignment]
+
     item = CondimentItem(
         name=params.name,
         quantity_status=params.quantity_status.value,
         is_staple=params.is_staple,
+        ingredient_master_id=master.id,
     )
     db.add(item)
     db.commit()

@@ -5,6 +5,7 @@ class IngredientMasterCreateParams(BaseModel):
     name: str
     default_expiry_days: int
     is_staple: bool = False
+    category: str = "ingredient"
 
 
 class IngredientMasterUpdateParams(BaseModel):
