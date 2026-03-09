@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import { useQueryClient } from '@tanstack/react-query'
 import { useSessionState } from '@/hooks/use-session-state'
 import { ChefHat, ChevronDown, ChevronUp, CookingPot, Heart, RefreshCw, ShoppingCart, Sparkles, UtensilsCrossed } from 'lucide-react'
@@ -46,11 +46,10 @@ export function MenuSuggestPage() {
 
   const { data: latestJob } = useLatestSuggestJob()
 
-  // ページ表示時に最新ジョブを復元
+  // ページ表示時に最新ジョブを復元（アプリ再起動時用）
   useEffect(() => {
     if (!latestJob || jobId != null || suggestions != null) return
     if (latestJob.status === 'pending' || latestJob.status === 'running') {
-      // 5分以上前のpending/runningジョブはゾンビとして無視
       const isRecent = latestJob.created_at
         && (Date.now() - new Date(latestJob.created_at).getTime()) < 5 * 60 * 1000
       if (isRecent) {
@@ -61,33 +60,9 @@ export function MenuSuggestPage() {
     }
   }, [latestJob]) // eslint-disable-line react-hooks/exhaustive-deps
 
+  // ポーリング・通知は SuggestJobMonitor が担当。ここでは suggesting 状態の判定のみ
   const { data: jobStatus, error: jobError } = useSuggestJob(jobId)
-
   const suggesting = jobId != null && !jobError && (jobStatus?.status === 'pending' || jobStatus?.status === 'running' || !jobStatus)
-
-  const sendNotification = useCallback((title: string, body: string) => {
-    if ('Notification' in window && Notification.permission === 'granted') {
-      new Notification(title, { body, icon: '/pwa-192x192.png' })
-    }
-  }, [])
-
-  useEffect(() => {
-    if (jobError) {
-      toast.error('提案状況の取得に失敗しました。再度お試しください。')
-      setJobId(null)
-      return
-    }
-    if (!jobStatus) return
-    if (jobStatus.status === 'completed' && jobStatus.suggestions) {
-      setSuggestions(jobStatus.suggestions)
-      setJobId(null)
-      sendNotification('献立提案が完了しました', `${jobStatus.suggestions.length}品の献立が提案されました`)
-    } else if (jobStatus.status === 'failed') {
-      toast.error(jobStatus.error ?? '提案処理中にエラーが発生しました')
-      setJobId(null)
-      sendNotification('献立提案に失敗しました', jobStatus.error ?? 'エラーが発生しました')
-    }
-  }, [jobStatus, jobError, setSuggestions, sendNotification])
 
   const toggleFavorite = async (recipeId: number) => {
     const isFav = favoriteIds.has(recipeId)
