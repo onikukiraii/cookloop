@@ -7,7 +7,8 @@ from db.session import get_db
 from entity.fridge_item import FridgeItem
 from entity.ingredient_master import IngredientMaster
 from entity.shopping_item import ShoppingItem
-from params.shopping import ShoppingItemCreateParams
+from lib.opensearch import create_ingredient_search_client
+from params.shopping import ShoppingItemCreateByNameParams, ShoppingItemCreateParams
 from response.shopping import ShoppingItemResponse, to_shopping_response
 
 router = APIRouter(prefix="/shopping", tags=["shopping"])
@@ -69,6 +70,40 @@ def check_shopping_item(item_id: int, db: Session = Depends(get_db)) -> Shopping
     db.add(fridge_item)
     db.commit()
 
+    return to_shopping_response(item)
+
+
+@router.post("/by-name", response_model=ShoppingItemResponse)
+def create_shopping_item_by_name(
+    params: ShoppingItemCreateByNameParams, db: Session = Depends(get_db)
+) -> ShoppingItemResponse:
+    # IngredientMaster を name で検索
+    master = db.query(IngredientMaster).filter(IngredientMaster.name == params.name).first()
+    if not master:
+        # 新規作成
+        master = IngredientMaster(
+            name=params.name,
+            default_expiry_days=7,
+            is_staple=False,
+        )
+        db.add(master)
+        db.flush()
+
+        try:
+            search_client = create_ingredient_search_client()
+            search_client.ensure_index()
+            search_client.upsert(master.id, master.name)  # type: ignore[arg-type]
+        except Exception:
+            pass
+
+    item = ShoppingItem(
+        ingredient_master_id=master.id,
+        source=params.source.value,
+    )
+    db.add(item)
+    db.commit()
+    db.refresh(item)
+    item.ingredient_master = master
     return to_shopping_response(item)
 
 
