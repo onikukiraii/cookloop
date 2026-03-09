@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useCallback, useEffect, useRef, useState } from 'react'
 import { Plus, Leaf, Star, Search } from 'lucide-react'
 import { toast } from 'sonner'
 import { Button } from '@/components/ui/button'
@@ -9,6 +9,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@
 import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog'
 import { EmptyState } from '@/components/EmptyState'
 import type { IngredientMasterResponse } from '@/api/constants'
+import { ingredientsApi } from '@/api/fetcher'
 import { useIngredients, useCreateIngredient, useUpdateIngredient } from '@/hooks/queries/useIngredients'
 
 export function IngredientMasterPage() {
@@ -21,10 +22,31 @@ export function IngredientMasterPage() {
   const [defaultExpiryDays, setDefaultExpiryDays] = useState('7')
   const [isStaple, setIsStaple] = useState(false)
   const [search, setSearch] = useState('')
+  const [filteredIds, setFilteredIds] = useState<Set<number> | null>(null)
+  const debounceRef = useRef<ReturnType<typeof setTimeout>>(null)
 
-  const filtered = items.filter((item: IngredientMasterResponse) =>
-    item.name.toLowerCase().includes(search.toLowerCase()),
-  )
+  const doSearch = useCallback(async (q: string) => {
+    if (!q.trim()) {
+      setFilteredIds(null)
+      return
+    }
+    try {
+      const hits = await ingredientsApi.search(q.trim())
+      setFilteredIds(new Set(hits.map((h) => h.id)))
+    } catch {
+      setFilteredIds(null)
+    }
+  }, [])
+
+  useEffect(() => {
+    if (debounceRef.current) clearTimeout(debounceRef.current)
+    debounceRef.current = setTimeout(() => doSearch(search), 200)
+    return () => { if (debounceRef.current) clearTimeout(debounceRef.current) }
+  }, [search, doSearch])
+
+  const filtered = filteredIds === null
+    ? items
+    : items.filter((item: IngredientMasterResponse) => filteredIds.has(item.id))
 
   const handleToggleStaple = async (item: IngredientMasterResponse) => {
     try {
