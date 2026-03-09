@@ -232,6 +232,40 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/recipe/suggest/jobs/latest": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Get Latest Suggest Job */
+        get: operations["get_latest_suggest_job_api_recipe_suggest_jobs_latest_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/recipe/suggest/jobs/{job_id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Get Suggest Job Status */
+        get: operations["get_suggest_job_status_api_recipe_suggest_jobs__job_id__get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/recipe/suggest/add-shopping": {
         parameters: {
             query?: never;
@@ -557,6 +591,22 @@ export interface components {
          * @enum {string}
          */
         ShoppingSource: "manual" | "recipe" | "staple_auto";
+        /** SuggestJobCreateResponse */
+        SuggestJobCreateResponse: {
+            /** Job Id */
+            job_id: number;
+        };
+        /** SuggestJobStatusResponse */
+        SuggestJobStatusResponse: {
+            /** Job Id */
+            job_id: number;
+            /** Status */
+            status: string;
+            /** Suggestions */
+            suggestions?: components["schemas"]["SuggestedRecipeResponse"][] | null;
+            /** Error */
+            error?: string | null;
+        };
         /** SuggestParams */
         SuggestParams: {
             /**
@@ -569,11 +619,6 @@ export interface components {
              * @default []
              */
             ingredient_master_ids: number[];
-        };
-        /** SuggestResponse */
-        SuggestResponse: {
-            /** Suggestions */
-            suggestions: components["schemas"]["SuggestedRecipeResponse"][];
         };
         /** SuggestedMaterialResponse */
         SuggestedMaterialResponse: {
@@ -1267,12 +1312,63 @@ export interface operations {
         };
         responses: {
             /** @description Successful Response */
+            202: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["SuggestJobCreateResponse"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    get_latest_suggest_job_api_recipe_suggest_jobs_latest_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
             200: {
                 headers: {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["SuggestResponse"];
+                    "application/json": components["schemas"]["SuggestJobStatusResponse"] | null;
+                };
+            };
+        };
+    };
+    get_suggest_job_status_api_recipe_suggest_jobs__job_id__get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                job_id: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["SuggestJobStatusResponse"];
                 };
             };
             /** @description Validation Error */

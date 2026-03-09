@@ -13,9 +13,10 @@ import type {
   ShoppingItemCreateParams,
   QuantityStatus,
   SuggestParams,
-  SuggestResponse,
   AddShoppingParams,
   AddShoppingResponse,
+  SuggestJobCreateResponse,
+  SuggestJobStatusResponse,
 } from './constants'
 
 const BASE_URL = import.meta.env.VITE_API_BASE_URL ?? 'http://localhost:8000'
@@ -170,7 +171,7 @@ export const favoritesApi = {
 }
 
 export const suggestApi = {
-  suggest: async (body: SuggestParams): Promise<SuggestResponse> => {
+  createJob: async (body: SuggestParams): Promise<SuggestJobCreateResponse> => {
     const res = await fetch(`${BASE_URL}/api/recipe/suggest`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
@@ -180,7 +181,23 @@ export const suggestApi = {
       const err = await res.json().catch(() => ({}))
       throw new Error(typeof err.detail === 'string' ? err.detail : 'サーバーエラーが発生しました')
     }
-    return res.json() as Promise<SuggestResponse>
+    return res.json() as Promise<SuggestJobCreateResponse>
+  },
+  getJobStatus: async (jobId: number): Promise<SuggestJobStatusResponse> => {
+    const res = await fetch(`${BASE_URL}/api/recipe/suggest/jobs/${jobId}`)
+    if (!res.ok) {
+      const err = await res.json().catch(() => ({}))
+      throw new Error(typeof err.detail === 'string' ? err.detail : 'サーバーエラーが発生しました')
+    }
+    return res.json() as Promise<SuggestJobStatusResponse>
+  },
+  getLatestJob: async (): Promise<SuggestJobStatusResponse | null> => {
+    const res = await fetch(`${BASE_URL}/api/recipe/suggest/jobs/latest`)
+    if (!res.ok) {
+      const err = await res.json().catch(() => ({}))
+      throw new Error(typeof err.detail === 'string' ? err.detail : 'サーバーエラーが発生しました')
+    }
+    return res.json() as Promise<SuggestJobStatusResponse | null>
   },
   addShopping: async (body: AddShoppingParams): Promise<AddShoppingResponse> => {
     const res = await fetch(`${BASE_URL}/api/recipe/suggest/add-shopping`, {

@@ -73,3 +73,14 @@ export type AddShoppingParams = {
 export type AddShoppingResponse = {
   added_count: number
 }
+
+export type SuggestJobCreateResponse = {
+  job_id: number
+}
+
+export type SuggestJobStatusResponse = {
+  job_id: number
+  status: 'pending' | 'running' | 'completed' | 'failed'
+  suggestions: SuggestedRecipe[] | null
+  error: string | null
+}

@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react'
+import { useCallback, useEffect, useMemo, useState } from 'react'
 import { useQueryClient } from '@tanstack/react-query'
 import { useSessionState } from '@/hooks/use-session-state'
 import { ChefHat, ChevronDown, ChevronUp, CookingPot, Heart, RefreshCw, ShoppingCart, Sparkles, UtensilsCrossed } from 'lucide-react'
@@ -15,6 +15,7 @@ import { suggestApi } from '@/api/fetcher'
 import type { FridgeItemResponse, SuggestedRecipe } from '@/api/constants'
 import { useFridgeItems } from '@/hooks/queries/useFridge'
 import { useFavorites, useAddFavorite, useRemoveFavorite } from '@/hooks/queries/useFavorites'
+import { useSuggestJob, useLatestSuggestJob } from '@/hooks/queries/useSuggest'
 
 const CATEGORY_ORDER = ['主菜', '副菜', '汁物', '主食', 'デザート', 'その他'] as const
 
@@ -39,9 +40,44 @@ export function MenuSuggestPage() {
   const [mode, setMode] = useState<'omakase' | 'ingredient'>('omakase')
   const [selectedIds, setSelectedIds] = useState<number[]>([])
   const [suggestions, setSuggestions] = useSessionState<SuggestedRecipe[] | null>('menu-suggestions', null)
-  const [suggesting, setSuggesting] = useState(false)
+  const [jobId, setJobId] = useState<number | null>(null)
   const [expandedIndex, setExpandedIndex] = useState<number | null>(null)
   const [addingShoppingFor, setAddingShoppingFor] = useState<number | null>(null)
+
+  const { data: latestJob } = useLatestSuggestJob()
+
+  // ページ表示時に最新ジョブを復元
+  useEffect(() => {
+    if (!latestJob || jobId != null || suggestions != null) return
+    if (latestJob.status === 'pending' || latestJob.status === 'running') {
+      setJobId(latestJob.job_id)
+    } else if (latestJob.status === 'completed' && latestJob.suggestions) {
+      setSuggestions(latestJob.suggestions)
+    }
+  }, [latestJob]) // eslint-disable-line react-hooks/exhaustive-deps
+
+  const { data: jobStatus } = useSuggestJob(jobId)
+
+  const suggesting = jobId != null && (jobStatus?.status === 'pending' || jobStatus?.status === 'running' || !jobStatus)
+
+  const sendNotification = useCallback((title: string, body: string) => {
+    if ('Notification' in window && Notification.permission === 'granted') {
+      new Notification(title, { body, icon: '/pwa-192x192.png' })
+    }
+  }, [])
+
+  useEffect(() => {
+    if (!jobStatus) return
+    if (jobStatus.status === 'completed' && jobStatus.suggestions) {
+      setSuggestions(jobStatus.suggestions)
+      setJobId(null)
+      sendNotification('献立提案が完了しました', `${jobStatus.suggestions.length}品の献立が提案されました`)
+    } else if (jobStatus.status === 'failed') {
+      toast.error(jobStatus.error ?? '提案処理中にエラーが発生しました')
+      setJobId(null)
+      sendNotification('献立提案に失敗しました', jobStatus.error ?? 'エラーが発生しました')
+    }
+  }, [jobStatus, setSuggestions, sendNotification])
 
   const toggleFavorite = async (recipeId: number) => {
     const isFav = favoriteIds.has(recipeId)
@@ -54,19 +90,19 @@ export function MenuSuggestPage() {
   }
 
   const handleSuggest = async () => {
-    setSuggesting(true)
     setSuggestions(null)
     setExpandedIndex(null)
+    if ('Notification' in window && Notification.permission === 'default') {
+      await Notification.requestPermission()
+    }
     try {
-      const res = await suggestApi.suggest({
+      const res = await suggestApi.createJob({
         mode,
         ingredient_master_ids: mode === 'ingredient' ? selectedIds : [],
       })
-      setSuggestions(res.suggestions)
+      setJobId(res.job_id)
     } catch (e) {
       toast.error(e instanceof Error ? e.message : '提案に失敗しました')
-    } finally {
-      setSuggesting(false)
     }
   }
 
